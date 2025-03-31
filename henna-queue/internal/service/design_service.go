@@ -4,9 +4,9 @@ import (
 	"errors"
 	"time"
 
-	"henna-queue/internal/model"
-	"henna-queue/internal/repository/mysql"
-	"henna-queue/pkg/db"
+	"example.com/henna-queue/internal/model"
+	"example.com/henna-queue/internal/repository/mysql"
+	"example.com/henna-queue/pkg/db"
 )
 
 type DesignService struct {
@@ -27,7 +27,7 @@ func (s *DesignService) GetDesigns(shopID uint, category, userID string, page, p
 	if err != nil {
 		return nil, 0, err
 	}
-	
+
 	// 构造响应, 并检查是否已收藏
 	var result []*model.DesignResponse
 	for _, design := range designs {
@@ -38,13 +38,13 @@ func (s *DesignService) GetDesigns(shopID uint, category, userID string, page, p
 				isLiked = true
 			}
 		}
-		
+
 		result = append(result, &model.DesignResponse{
 			TattooDesign: *design,
 			IsLiked:      isLiked,
 		})
 	}
-	
+
 	return result, total, nil
 }
 
@@ -54,7 +54,7 @@ func (s *DesignService) GetDesign(designID uint, userID string) (*model.DesignRe
 	if err != nil {
 		return nil, err
 	}
-	
+
 	isLiked := false
 	if userID != "" {
 		// 检查是否已收藏
@@ -62,7 +62,7 @@ func (s *DesignService) GetDesign(designID uint, userID string) (*model.DesignRe
 			isLiked = true
 		}
 	}
-	
+
 	return &model.DesignResponse{
 		TattooDesign: *design,
 		IsLiked:      isLiked,
@@ -76,27 +76,27 @@ func (s *DesignService) ToggleFavorite(userID string, designID uint) (bool, erro
 	if err != nil {
 		return false, errors.New("图案不存在")
 	}
-	
+
 	// 检查是否已收藏
 	isFavorite, err := s.favoriteRepo.CheckFavorite(userID, designID)
 	if err != nil && err.Error() != "record not found" {
 		return false, err
 	}
-	
+
 	if isFavorite {
 		// 已收藏，取消收藏
 		err = s.favoriteRepo.DeleteFavorite(userID, designID)
 		if err != nil {
 			return true, err
 		}
-		
+
 		// 减少收藏数
 		err = db.DB.Model(&model.TattooDesign{}).Where("id = ?", designID).
 			UpdateColumn("likes", db.DB.Raw("likes - 1")).Error
 		if err != nil {
 			return false, err
 		}
-		
+
 		return false, nil
 	} else {
 		// 未收藏，添加收藏
@@ -105,19 +105,19 @@ func (s *DesignService) ToggleFavorite(userID string, designID uint) (bool, erro
 			DesignID:  designID,
 			CreatedAt: time.Now(),
 		}
-		
+
 		err = s.favoriteRepo.Create(favorite)
 		if err != nil {
 			return false, err
 		}
-		
+
 		// 增加收藏数
 		err = db.DB.Model(&model.TattooDesign{}).Where("id = ?", designID).
 			UpdateColumn("likes", db.DB.Raw("likes + 1")).Error
 		if err != nil {
 			return true, err
 		}
-		
+
 		return true, nil
 	}
 }
@@ -143,7 +143,7 @@ func (s *DesignService) CreateDesign(shopID uint, req interface{}) (*model.Tatto
 	if !ok {
 		return nil, errors.New("无效的请求参数")
 	}
-	
+
 	design := &model.TattooDesign{
 		ShopID:      shopID,
 		Title:       reqMap.Title,
@@ -154,12 +154,12 @@ func (s *DesignService) CreateDesign(shopID uint, req interface{}) (*model.Tatto
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
-	
+
 	err := s.designRepo.Create(design)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return design, nil
 }
 
@@ -175,44 +175,44 @@ func (s *DesignService) UpdateDesign(designID, shopID uint, req interface{}) (*m
 	if !ok {
 		return nil, errors.New("无效的请求参数")
 	}
-	
+
 	design, err := s.designRepo.GetByID(designID)
 	if err != nil {
 		return nil, errors.New("图案不存在")
 	}
-	
+
 	if design.ShopID != shopID {
 		return nil, errors.New("无权操作该图案")
 	}
-	
+
 	// 更新字段
 	if reqMap.Title != "" {
 		design.Title = reqMap.Title
 	}
-	
+
 	if reqMap.Category != "" {
 		design.Category = reqMap.Category
 	}
-	
+
 	if reqMap.ImageURL != "" {
 		design.ImageURL = reqMap.ImageURL
 	}
-	
+
 	if reqMap.Description != "" {
 		design.Description = reqMap.Description
 	}
-	
+
 	if reqMap.Status != nil {
 		design.Status = *reqMap.Status
 	}
-	
+
 	design.UpdatedAt = time.Now()
-	
+
 	err = s.designRepo.Update(design)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return design, nil
 }
 
@@ -222,10 +222,10 @@ func (s *DesignService) DeleteDesign(designID, shopID uint) error {
 	if err != nil {
 		return errors.New("图案不存在")
 	}
-	
+
 	if design.ShopID != shopID {
 		return errors.New("无权操作该图案")
 	}
-	
+
 	return s.designRepo.Delete(designID)
-} 
+}

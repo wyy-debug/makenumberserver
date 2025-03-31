@@ -1,9 +1,10 @@
 package mysql
 
 import (
-	"henna-queue/internal/model"
-	"henna-queue/pkg/db"
 	"time"
+
+	"example.com/henna-queue/internal/model"
+	"example.com/henna-queue/pkg/db"
 )
 
 type QueueRepository struct{}
@@ -136,4 +137,4 @@ func (r *QueueRepository) Create(queue *model.Queue) error {
 // Update 更新队列
 func (r *QueueRepository) Update(queue *model.Queue) error {
 	return db.DB.Save(queue).Error
-} 
+}

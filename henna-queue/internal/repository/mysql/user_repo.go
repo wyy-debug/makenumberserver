@@ -1,8 +1,8 @@
 package mysql
 
 import (
-	"henna-queue/internal/model"
-	"henna-queue/pkg/db"
+	"example.com/henna-queue/internal/model"
+	"example.com/henna-queue/pkg/db"
 )
 
 type UserRepository struct{}
@@ -34,4 +34,4 @@ func (r *UserRepository) Update(user *model.User) error {
 // UpdatePhone 更新用户手机号
 func (r *UserRepository) UpdatePhone(userID string, phone string) error {
 	return db.DB.Model(&model.User{}).Where("id = ?", userID).Update("phone", phone).Error
-} 
+}

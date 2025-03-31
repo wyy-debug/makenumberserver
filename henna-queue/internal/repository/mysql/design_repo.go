@@ -1,8 +1,8 @@
 package mysql
 
 import (
-	"henna-queue/internal/model"
-	"henna-queue/pkg/db"
+	"example.com/henna-queue/internal/model"
+	"example.com/henna-queue/pkg/db"
 )
 
 type DesignRepository struct{}
@@ -26,22 +26,22 @@ func (r *DesignRepository) GetDesigns(shopID uint, category string, page, pageSi
 	offset := (page - 1) * pageSize
 	var designs []*model.TattooDesign
 	var total int64
-	
+
 	query := db.DB.Model(&model.TattooDesign{}).Where("shop_id = ? AND status = ?", shopID, 1)
-	
+
 	if category != "" {
 		query = query.Where("category = ?", category)
 	}
-	
+
 	// 获取总数
 	query.Count(&total)
-	
+
 	// 获取分页数据
 	result := query.Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&designs)
 	if result.Error != nil {
 		return nil, 0, result.Error
 	}
-	
+
 	return designs, int(total), nil
 }
 
@@ -50,26 +50,26 @@ func (r *DesignRepository) GetAdminDesigns(shopID uint, category, status string,
 	offset := (page - 1) * pageSize
 	var designs []*model.TattooDesign
 	var total int64
-	
+
 	query := db.DB.Model(&model.TattooDesign{}).Where("shop_id = ?", shopID)
-	
+
 	if category != "" {
 		query = query.Where("category = ?", category)
 	}
-	
+
 	if status != "" {
 		query = query.Where("status = ?", status)
 	}
-	
+
 	// 获取总数
 	query.Count(&total)
-	
+
 	// 获取分页数据
 	result := query.Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&designs)
 	if result.Error != nil {
 		return nil, 0, result.Error
 	}
-	
+
 	return designs, int(total), nil
 }
 
@@ -86,4 +86,4 @@ func (r *DesignRepository) Update(design *model.TattooDesign) error {
 // Delete 删除图案
 func (r *DesignRepository) Delete(id uint) error {
 	return db.DB.Delete(&model.TattooDesign{}, id).Error
-} 
+}

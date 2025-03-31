@@ -1,14 +1,13 @@
 package api
 
 import (
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 
-	"henna-queue/internal/middleware"
-	"henna-queue/internal/service"
-	"henna-queue/internal/util/response"
+	"example.com/henna-queue/internal/middleware"
+	"example.com/henna-queue/internal/service"
+	"example.com/henna-queue/internal/util/response"
 )
 
 var designService = service.NewDesignService()
@@ -22,30 +21,30 @@ func GetDesigns(c *gin.Context) {
 		response.BadRequest(c, "无效的店铺ID")
 		return
 	}
-	
+
 	category := c.Query("category")
 	pageStr := c.DefaultQuery("page", "1")
 	pageSizeStr := c.DefaultQuery("page_size", "10")
-	
+
 	page, _ := strconv.Atoi(pageStr)
 	pageSize, _ := strconv.Atoi(pageSizeStr)
-	
+
 	// 获取用户ID (如果已登录)
 	userID := ""
 	if authHeader := c.GetHeader("Authorization"); authHeader != "" {
 		userID = c.GetString(middleware.ContextUserID)
 	}
-	
+
 	designs, total, err := designService.GetDesigns(uint(shopID), category, userID, page, pageSize)
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return
 	}
-	
+
 	response.Success(c, gin.H{
-		"designs": designs,
-		"total": total,
-		"page": page,
+		"designs":   designs,
+		"total":     total,
+		"page":      page,
 		"page_size": pageSize,
 	})
 }
@@ -59,19 +58,19 @@ func GetDesign(c *gin.Context) {
 		response.BadRequest(c, "无效的图案ID")
 		return
 	}
-	
+
 	// 获取用户ID (如果已登录)
 	userID := ""
 	if authHeader := c.GetHeader("Authorization"); authHeader != "" {
 		userID = c.GetString(middleware.ContextUserID)
 	}
-	
+
 	design, err := designService.GetDesign(uint(designID), userID)
 	if err != nil {
 		response.NotFound(c, "图案不存在")
 		return
 	}
-	
+
 	response.Success(c, design)
 }
 
@@ -79,7 +78,7 @@ func GetDesign(c *gin.Context) {
 func ToggleFavorite(c *gin.Context) {
 	// 从上下文获取用户ID
 	userID := c.GetString(middleware.ContextUserID)
-	
+
 	// 从路径参数获取图案ID
 	designIDStr := c.Param("id")
 	designID, err := strconv.ParseUint(designIDStr, 10, 32)
@@ -87,13 +86,13 @@ func ToggleFavorite(c *gin.Context) {
 		response.BadRequest(c, "无效的图案ID")
 		return
 	}
-	
+
 	isLiked, err := designService.ToggleFavorite(userID, uint(designID))
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return
 	}
-	
+
 	response.Success(c, gin.H{
 		"is_liked": isLiked,
 	})
@@ -103,24 +102,24 @@ func ToggleFavorite(c *gin.Context) {
 func GetUserFavorites(c *gin.Context) {
 	// 从上下文获取用户ID
 	userID := c.GetString(middleware.ContextUserID)
-	
+
 	// 获取分页参数
 	pageStr := c.DefaultQuery("page", "1")
 	pageSizeStr := c.DefaultQuery("page_size", "10")
-	
+
 	page, _ := strconv.Atoi(pageStr)
 	pageSize, _ := strconv.Atoi(pageSizeStr)
-	
+
 	designs, total, err := designService.GetUserFavorites(userID, page, pageSize)
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return
 	}
-	
+
 	response.Success(c, gin.H{
-		"designs": designs,
-		"total": total,
-		"page": page,
+		"designs":   designs,
+		"total":     total,
+		"page":      page,
 		"page_size": pageSize,
 	})
 }
@@ -129,27 +128,27 @@ func GetUserFavorites(c *gin.Context) {
 func GetAdminDesigns(c *gin.Context) {
 	// 从上下文获取店铺ID
 	shopID := c.GetUint(middleware.ContextShopID)
-	
+
 	// 获取查询参数
 	category := c.Query("category")
 	status := c.Query("status")
-	
+
 	pageStr := c.DefaultQuery("page", "1")
 	pageSizeStr := c.DefaultQuery("page_size", "10")
-	
+
 	page, _ := strconv.Atoi(pageStr)
 	pageSize, _ := strconv.Atoi(pageSizeStr)
-	
+
 	designs, total, err := designService.GetAdminDesigns(shopID, category, status, page, pageSize)
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return
 	}
-	
+
 	response.Success(c, gin.H{
-		"designs": designs,
-		"total": total,
-		"page": page,
+		"designs":   designs,
+		"total":     total,
+		"page":      page,
 		"page_size": pageSize,
 	})
 }
@@ -158,25 +157,25 @@ func GetAdminDesigns(c *gin.Context) {
 func CreateDesign(c *gin.Context) {
 	// 从上下文获取店铺ID
 	shopID := c.GetUint(middleware.ContextShopID)
-	
+
 	var req struct {
 		Title       string `json:"title" binding:"required"`
 		Category    string `json:"category" binding:"required"`
 		ImageURL    string `json:"image_url" binding:"required"`
 		Description string `json:"description"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "请求参数错误")
 		return
 	}
-	
+
 	design, err := designService.CreateDesign(shopID, &req)
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return
 	}
-	
+
 	response.Success(c, design)
 }
 
@@ -189,10 +188,10 @@ func UpdateDesign(c *gin.Context) {
 		response.BadRequest(c, "无效的图案ID")
 		return
 	}
-	
+
 	// 从上下文获取店铺ID
 	shopID := c.GetUint(middleware.ContextShopID)
-	
+
 	var req struct {
 		Title       string `json:"title"`
 		Category    string `json:"category"`
@@ -200,18 +199,18 @@ func UpdateDesign(c *gin.Context) {
 		Description string `json:"description"`
 		Status      *int8  `json:"status"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "请求参数错误")
 		return
 	}
-	
+
 	design, err := designService.UpdateDesign(uint(designID), shopID, &req)
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return
 	}
-	
+
 	response.Success(c, design)
 }
 
@@ -224,15 +223,15 @@ func DeleteDesign(c *gin.Context) {
 		response.BadRequest(c, "无效的图案ID")
 		return
 	}
-	
+
 	// 从上下文获取店铺ID
 	shopID := c.GetUint(middleware.ContextShopID)
-	
+
 	err = designService.DeleteDesign(uint(designID), shopID)
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return
 	}
-	
+
 	response.Success(c, nil)
-} 
+}

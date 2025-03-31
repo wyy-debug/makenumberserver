@@ -2,40 +2,45 @@ package service
 
 import (
 	"errors"
+	"example.com/henna-queue/internal/model"
+	"example.com/henna-queue/internal/repository"
+	"example.com/henna-queue/internal/repository/factory"
 	"time"
-
-	"henna-queue/internal/model"
-	"henna-queue/internal/repository/mysql"
 )
 
 type ShopService struct {
-	shopRepo    *mysql.ShopRepository
-	serviceRepo *mysql.ServiceRepository
+	shopRepo    repository.ShopRepository
+	serviceRepo repository.ServiceRepository
 }
 
 func NewShopService() *ShopService {
 	return &ShopService{
-		shopRepo:    mysql.NewShopRepository(),
-		serviceRepo: mysql.NewServiceRepository(),
+		shopRepo:    factory.NewShopRepository(),
+		serviceRepo: factory.NewServiceRepository(),
 	}
 }
 
-// GetShop 获取店铺
-func (s *ShopService) GetShop(shopID uint) (*model.Shop, error) {
-	return s.shopRepo.GetByID(shopID)
+// GetShop 获取店铺信息
+func (s *ShopService) GetShop(id uint) (*model.Shop, error) {
+	return s.shopRepo.GetByID(id)
 }
 
-// GetShopServices 获取店铺服务
+// GetShopServices 获取店铺服务列表
 func (s *ShopService) GetShopServices(shopID uint) ([]*model.Service, error) {
 	return s.serviceRepo.GetByShopID(shopID)
 }
 
 // GetAllServices 获取店铺所有服务(包括禁用的)
 func (s *ShopService) GetAllServices(shopID uint) ([]*model.Service, error) {
-	return s.serviceRepo.GetAllByShopID(shopID)
+	return s.serviceRepo.GetByShopID(shopID)
 }
 
-// UpdateShop 更新店铺
+// CreateShop 创建店铺
+func (s *ShopService) CreateShop(shop *model.Shop) error {
+	return s.shopRepo.Create(shop)
+}
+
+// UpdateShop 更新店铺信息
 func (s *ShopService) UpdateShop(shopID uint, req interface{}) (*model.Shop, error) {
 	reqMap, ok := req.(*struct {
 		Name          string  `json:"name"`
@@ -50,53 +55,58 @@ func (s *ShopService) UpdateShop(shopID uint, req interface{}) (*model.Shop, err
 	if !ok {
 		return nil, errors.New("无效的请求参数")
 	}
-	
+
 	shop, err := s.shopRepo.GetByID(shopID)
 	if err != nil {
 		return nil, errors.New("店铺不存在")
 	}
-	
+
 	// 更新字段
 	if reqMap.Name != "" {
 		shop.Name = reqMap.Name
 	}
-	
+
 	if reqMap.Address != "" {
 		shop.Address = reqMap.Address
 	}
-	
+
 	if reqMap.Latitude != 0 {
 		shop.Latitude = reqMap.Latitude
 	}
-	
+
 	if reqMap.Longitude != 0 {
 		shop.Longitude = reqMap.Longitude
 	}
-	
+
 	if reqMap.Phone != "" {
 		shop.Phone = reqMap.Phone
 	}
-	
+
 	if reqMap.BusinessHours != "" {
 		shop.BusinessHours = reqMap.BusinessHours
 	}
-	
+
 	if reqMap.Description != "" {
 		shop.Description = reqMap.Description
 	}
-	
+
 	if reqMap.CoverImage != "" {
 		shop.CoverImage = reqMap.CoverImage
 	}
-	
+
 	shop.UpdatedAt = time.Now()
-	
+
 	err = s.shopRepo.Update(shop)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return shop, nil
+}
+
+// DeleteShop 删除店铺
+func (s *ShopService) DeleteShop(id uint) error {
+	return s.shopRepo.Delete(id)
 }
 
 // CreateService 创建服务
@@ -110,7 +120,7 @@ func (s *ShopService) CreateService(shopID uint, req interface{}) (*model.Servic
 	if !ok {
 		return nil, errors.New("无效的请求参数")
 	}
-	
+
 	service := &model.Service{
 		ShopID:      shopID,
 		Name:        reqMap.Name,
@@ -121,16 +131,16 @@ func (s *ShopService) CreateService(shopID uint, req interface{}) (*model.Servic
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
-	
+
 	err := s.serviceRepo.Create(service)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return service, nil
 }
 
-// UpdateService 更新服务
+// UpdateService 更新服务信息
 func (s *ShopService) UpdateService(serviceID, shopID uint, req interface{}) (*model.Service, error) {
 	reqMap, ok := req.(*struct {
 		Name        string `json:"name"`
@@ -142,44 +152,44 @@ func (s *ShopService) UpdateService(serviceID, shopID uint, req interface{}) (*m
 	if !ok {
 		return nil, errors.New("无效的请求参数")
 	}
-	
+
 	service, err := s.serviceRepo.GetByID(serviceID)
 	if err != nil {
 		return nil, errors.New("服务不存在")
 	}
-	
+
 	if service.ShopID != shopID {
 		return nil, errors.New("无权操作该服务")
 	}
-	
+
 	// 更新字段
 	if reqMap.Name != "" {
 		service.Name = reqMap.Name
 	}
-	
+
 	if reqMap.Duration != 0 {
 		service.Duration = reqMap.Duration
 	}
-	
+
 	if reqMap.Description != "" {
 		service.Description = reqMap.Description
 	}
-	
+
 	if reqMap.Status != nil {
 		service.Status = *reqMap.Status
 	}
-	
+
 	if reqMap.SortOrder != 0 {
 		service.SortOrder = reqMap.SortOrder
 	}
-	
+
 	service.UpdatedAt = time.Now()
-	
+
 	err = s.serviceRepo.Update(service)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return service, nil
 }
 
@@ -189,10 +199,10 @@ func (s *ShopService) DeleteService(serviceID, shopID uint) error {
 	if err != nil {
 		return errors.New("服务不存在")
 	}
-	
+
 	if service.ShopID != shopID {
 		return errors.New("无权操作该服务")
 	}
-	
+
 	return s.serviceRepo.Delete(serviceID)
-} 
+}

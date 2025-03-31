@@ -4,9 +4,9 @@ import (
 	"errors"
 
 	"gorm.io/gorm"
-	
-	"henna-queue/internal/model"
-	"henna-queue/internal/database"
+
+	"example.com/henna-queue/internal/model"
+	"example.com/henna-queue/pkg/db"
 )
 
 type CategoryRepository struct {
@@ -15,7 +15,7 @@ type CategoryRepository struct {
 
 func NewCategoryRepository() *CategoryRepository {
 	return &CategoryRepository{
-		db: database.GetDB(),
+		db: db.DB,
 	}
 }
 
@@ -65,4 +65,4 @@ func (r *CategoryRepository) ExistsByCode(shopID uint, code string) (bool, error
 		return false, result.Error
 	}
 	return count > 0, nil
-} 
+}

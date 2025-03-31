@@ -6,9 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"henna-queue/internal/middleware"
-	"henna-queue/internal/service"
-	"henna-queue/internal/util/response"
+	"example.com/henna-queue/internal/middleware"
+	"example.com/henna-queue/internal/service"
+	"example.com/henna-queue/internal/util/response"
 )
 
 var adminService = service.NewAdminService()
@@ -30,7 +30,7 @@ func GetStatistics(c *gin.Context) {
 	response.Success(c, stats)
 }
 
-// GetAdminProfile 获取管理员信息
+// GetAdminProfile 获取管理员个人信息
 func GetAdminProfile(c *gin.Context) {
 	// 从上下文获取管理员ID
 	adminID := c.GetUint(middleware.ContextAdminID)
@@ -44,9 +44,8 @@ func GetAdminProfile(c *gin.Context) {
 	response.Success(c, admin)
 }
 
-// UpdateAdminProfile 更新管理员信息
+// UpdateAdminProfile 更新管理员个人信息
 func UpdateAdminProfile(c *gin.Context) {
-	// 从上下文获取管理员ID
 	adminID := c.GetUint(middleware.ContextAdminID)
 
 	var req struct {
@@ -72,7 +71,23 @@ func UpdateAdminProfile(c *gin.Context) {
 // CreateAdmin 创建管理员(超级管理员使用)
 func CreateAdmin(c *gin.Context) {
 	// 检查超级管理员权限
-	role := c.GetInt8(middleware.ContextRole)
+	roleValue, exists := c.Get(middleware.ContextRole)
+	if !exists {
+		response.Forbidden(c, "未找到角色信息")
+		return
+	}
+
+	role, ok := roleValue.(int8)
+	if !ok {
+		// 尝试将 interface{} 转换为 int8
+		if roleInt, ok := roleValue.(int); ok {
+			role = int8(roleInt)
+		} else {
+			response.ServerError(c, "角色类型错误")
+			return
+		}
+	}
+
 	if role != 2 {
 		response.Forbidden(c, "需要超级管理员权限")
 		return
@@ -102,7 +117,23 @@ func CreateAdmin(c *gin.Context) {
 // GetAdmins 获取管理员列表(超级管理员使用)
 func GetAdmins(c *gin.Context) {
 	// 检查超级管理员权限
-	role := c.GetInt8(middleware.ContextRole)
+	roleValue, exists := c.Get(middleware.ContextRole)
+	if !exists {
+		response.Forbidden(c, "未找到角色信息")
+		return
+	}
+
+	role, ok := roleValue.(int8)
+	if !ok {
+		// 尝试将 interface{} 转换为 int8
+		if roleInt, ok := roleValue.(int); ok {
+			role = int8(roleInt)
+		} else {
+			response.ServerError(c, "角色类型错误")
+			return
+		}
+	}
+
 	if role != 2 {
 		response.Forbidden(c, "需要超级管理员权限")
 		return
@@ -120,7 +151,23 @@ func GetAdmins(c *gin.Context) {
 // DeleteAdmin 删除管理员(超级管理员使用)
 func DeleteAdmin(c *gin.Context) {
 	// 检查超级管理员权限
-	role := c.GetInt8(middleware.ContextRole)
+	roleValue, exists := c.Get(middleware.ContextRole)
+	if !exists {
+		response.Forbidden(c, "未找到角色信息")
+		return
+	}
+
+	role, ok := roleValue.(int8)
+	if !ok {
+		// 尝试将 interface{} 转换为 int8
+		if roleInt, ok := roleValue.(int); ok {
+			role = int8(roleInt)
+		} else {
+			response.ServerError(c, "角色类型错误")
+			return
+		}
+	}
+
 	if role != 2 {
 		response.Forbidden(c, "需要超级管理员权限")
 		return

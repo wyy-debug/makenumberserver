@@ -1,14 +1,13 @@
 package api
 
 import (
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 
-	"henna-queue/internal/middleware"
-	"henna-queue/internal/service"
-	"henna-queue/internal/util/response"
+	"example.com/henna-queue/internal/middleware"
+	"example.com/henna-queue/internal/service"
+	"example.com/henna-queue/internal/util/response"
 )
 
 var shopService = service.NewShopService()
@@ -22,13 +21,13 @@ func GetShop(c *gin.Context) {
 		response.BadRequest(c, "无效的店铺ID")
 		return
 	}
-	
+
 	shop, err := shopService.GetShop(uint(shopID))
 	if err != nil {
 		response.NotFound(c, "店铺不存在")
 		return
 	}
-	
+
 	response.Success(c, shop)
 }
 
@@ -41,13 +40,13 @@ func GetShopServices(c *gin.Context) {
 		response.BadRequest(c, "无效的店铺ID")
 		return
 	}
-	
+
 	services, err := shopService.GetShopServices(uint(shopID))
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return
 	}
-	
+
 	response.Success(c, services)
 }
 
@@ -55,13 +54,13 @@ func GetShopServices(c *gin.Context) {
 func GetAdminShop(c *gin.Context) {
 	// 从上下文获取店铺ID
 	shopID := c.GetUint(middleware.ContextShopID)
-	
+
 	shop, err := shopService.GetShop(shopID)
 	if err != nil {
 		response.NotFound(c, "店铺不存在")
 		return
 	}
-	
+
 	response.Success(c, shop)
 }
 
@@ -69,7 +68,7 @@ func GetAdminShop(c *gin.Context) {
 func UpdateShop(c *gin.Context) {
 	// 从上下文获取店铺ID
 	shopID := c.GetUint(middleware.ContextShopID)
-	
+
 	var req struct {
 		Name          string  `json:"name"`
 		Address       string  `json:"address"`
@@ -80,18 +79,18 @@ func UpdateShop(c *gin.Context) {
 		Description   string  `json:"description"`
 		CoverImage    string  `json:"cover_image"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "请求参数错误")
 		return
 	}
-	
+
 	shop, err := shopService.UpdateShop(shopID, &req)
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return
 	}
-	
+
 	response.Success(c, shop)
 }
 
@@ -99,13 +98,13 @@ func UpdateShop(c *gin.Context) {
 func GetAdminServices(c *gin.Context) {
 	// 从上下文获取店铺ID
 	shopID := c.GetUint(middleware.ContextShopID)
-	
+
 	services, err := shopService.GetAllServices(shopID)
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return
 	}
-	
+
 	response.Success(c, services)
 }
 
@@ -113,25 +112,25 @@ func GetAdminServices(c *gin.Context) {
 func CreateService(c *gin.Context) {
 	// 从上下文获取店铺ID
 	shopID := c.GetUint(middleware.ContextShopID)
-	
+
 	var req struct {
 		Name        string `json:"name" binding:"required"`
 		Duration    int    `json:"duration" binding:"required"`
 		Description string `json:"description"`
 		SortOrder   int    `json:"sort_order"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "请求参数错误")
 		return
 	}
-	
+
 	service, err := shopService.CreateService(shopID, &req)
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return
 	}
-	
+
 	response.Success(c, service)
 }
 
@@ -144,10 +143,10 @@ func UpdateService(c *gin.Context) {
 		response.BadRequest(c, "无效的服务ID")
 		return
 	}
-	
+
 	// 从上下文获取店铺ID
 	shopID := c.GetUint(middleware.ContextShopID)
-	
+
 	var req struct {
 		Name        string `json:"name"`
 		Duration    int    `json:"duration"`
@@ -155,18 +154,18 @@ func UpdateService(c *gin.Context) {
 		Status      *int8  `json:"status"`
 		SortOrder   int    `json:"sort_order"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "请求参数错误")
 		return
 	}
-	
+
 	service, err := shopService.UpdateService(uint(serviceID), shopID, &req)
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return
 	}
-	
+
 	response.Success(c, service)
 }
 
@@ -179,15 +178,15 @@ func DeleteService(c *gin.Context) {
 		response.BadRequest(c, "无效的服务ID")
 		return
 	}
-	
+
 	// 从上下文获取店铺ID
 	shopID := c.GetUint(middleware.ContextShopID)
-	
+
 	err = shopService.DeleteService(uint(serviceID), shopID)
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return
 	}
-	
+
 	response.Success(c, nil)
-} 
+}

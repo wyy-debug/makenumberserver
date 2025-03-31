@@ -27,12 +27,12 @@ type DailyStatistics struct {
 
 // StatisticsResponse 统计数据响应
 type StatisticsResponse struct {
-	Today      DailyStatistics   `json:"today"`
-	Yesterday  DailyStatistics   `json:"yesterday"`
-	Trend      []DailyStatistics `json:"trend"`
+	Today      *DailyStatistics   `json:"today"`     // 当天数据
+	Yesterday  *DailyStatistics   `json:"yesterday"` // 昨天数据
+	Trend      []*DailyStatistics `json:"trend"`     // 趋势数据
 	Comparison struct {
-		ServedPercentage float64 `json:"served_percentage"`
-		QueuePercentage  float64 `json:"queue_percentage"`
-		WaitPercentage   float64 `json:"wait_percentage"`
+		ServedPercentage float64 `json:"served_percentage"` // 服务人数环比
+		QueuePercentage  float64 `json:"queue_percentage"`  // 排队人数环比
+		WaitPercentage   float64 `json:"wait_percentage"`   // 等待时间环比
 	} `json:"comparison"`
-} 
+}

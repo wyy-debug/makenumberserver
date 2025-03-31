@@ -10,9 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 
-	"henna-queue/internal/api"
-	"henna-queue/internal/middleware"
-	"henna-queue/pkg/db"
+	"example.com/henna-queue/internal/api"
+	"example.com/henna-queue/internal/middleware"
+	"example.com/henna-queue/pkg/db"
 )
 
 func main() {
@@ -151,4 +151,4 @@ func setupRoutes(r *gin.Engine) {
 		adminAuth.POST("/login", api.AdminLogin)
 		adminAuth.POST("/logout", api.AdminLogout)
 	}
-} 
+}

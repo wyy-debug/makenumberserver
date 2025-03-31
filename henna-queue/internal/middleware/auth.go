@@ -4,13 +4,16 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	
-	"henna-queue/internal/util/response"
-	"henna-queue/pkg/jwt"
+
+	"example.com/henna-queue/internal/util/response"
+	"example.com/henna-queue/pkg/jwt"
 )
 
 // ContextUserID 上下文用户ID键
 const ContextUserID = "user_id"
+
+// ContextIsSuperAdmin 上下文是否超级管理员键
+const ContextIsSuperAdmin = "is_super_admin"
 
 // AuthRequired 用户认证中间件
 func AuthRequired() gin.HandlerFunc {
@@ -22,7 +25,7 @@ func AuthRequired() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		
+
 		// 解析token
 		parts := strings.SplitN(authHeader, " ", 2)
 		if !(len(parts) == 2 && parts[0] == "Bearer") {
@@ -30,7 +33,7 @@ func AuthRequired() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		
+
 		// 解析用户声明
 		claims, err := jwt.ParseUserToken(parts[1])
 		if err != nil {
@@ -38,9 +41,9 @@ func AuthRequired() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		
+
 		// 设置上下文
 		c.Set(ContextUserID, claims.UserID)
 		c.Next()
 	}
-} 
+}

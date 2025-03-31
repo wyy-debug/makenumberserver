@@ -6,9 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"henna-queue/internal/middleware"
-	"henna-queue/internal/service"
-	"henna-queue/internal/util/response"
+	"example.com/henna-queue/internal/middleware"
+	"example.com/henna-queue/internal/service"
+	"example.com/henna-queue/internal/util/response"
 )
 
 var queueService = service.NewQueueService()
@@ -17,7 +17,7 @@ var queueService = service.NewQueueService()
 func GetQueueStatus(c *gin.Context) {
 	// 从上下文获取用户ID
 	userID := c.GetString(middleware.ContextUserID)
-	
+
 	// 从上下文或查询参数获取shopID
 	shopIDStr := c.Query("shop_id")
 	shopID, err := strconv.ParseUint(shopIDStr, 10, 32)
@@ -25,13 +25,13 @@ func GetQueueStatus(c *gin.Context) {
 		response.BadRequest(c, "无效的店铺ID")
 		return
 	}
-	
+
 	status, err := queueService.GetQueueStatus(userID, uint(shopID))
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return
 	}
-	
+
 	response.Success(c, status)
 }
 
@@ -39,24 +39,24 @@ func GetQueueStatus(c *gin.Context) {
 func GetQueueNumber(c *gin.Context) {
 	// 从上下文获取用户ID
 	userID := c.GetString(middleware.ContextUserID)
-	
+
 	// 绑定参数
 	var req struct {
 		ShopID    uint `json:"shop_id" binding:"required"`
 		ServiceID uint `json:"service_id" binding:"required"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "请求参数错误")
 		return
 	}
-	
+
 	queue, err := queueService.GetQueueNumber(userID, req.ShopID, req.ServiceID)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
+
 	response.Success(c, queue)
 }
 
@@ -64,23 +64,23 @@ func GetQueueNumber(c *gin.Context) {
 func CancelQueue(c *gin.Context) {
 	// 从上下文获取用户ID
 	userID := c.GetString(middleware.ContextUserID)
-	
+
 	// 绑定参数
 	var req struct {
 		ShopID uint `json:"shop_id" binding:"required"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "请求参数错误")
 		return
 	}
-	
+
 	err := queueService.CancelQueue(userID, req.ShopID)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
+
 	response.Success(c, nil)
 }
 
@@ -93,13 +93,13 @@ func GetCurrentQueue(c *gin.Context) {
 		response.BadRequest(c, "无效的店铺ID")
 		return
 	}
-	
+
 	status, err := queueService.GetCurrentQueue(uint(shopID))
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
+
 	response.Success(c, status)
 }
 
@@ -107,13 +107,13 @@ func GetCurrentQueue(c *gin.Context) {
 func GetAdminQueue(c *gin.Context) {
 	// 从上下文获取店铺ID
 	shopID := c.GetUint(middleware.ContextShopID)
-	
+
 	queues, err := queueService.GetAdminQueue(shopID)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
+
 	response.Success(c, queues)
 }
 
@@ -126,26 +126,26 @@ func UpdateQueueStatus(c *gin.Context) {
 		response.BadRequest(c, "无效的排队ID")
 		return
 	}
-	
+
 	// 绑定参数
 	var req struct {
 		Status int8 `json:"status" binding:"required"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "请求参数错误")
 		return
 	}
-	
+
 	// 从上下文获取店铺ID
 	shopID := c.GetUint(middleware.ContextShopID)
-	
+
 	queue, err := queueService.UpdateQueueStatus(uint(queueID), shopID, req.Status)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
+
 	response.Success(c, queue)
 }
 
@@ -153,13 +153,13 @@ func UpdateQueueStatus(c *gin.Context) {
 func CallNextNumber(c *gin.Context) {
 	// 从上下文获取店铺ID
 	shopID := c.GetUint(middleware.ContextShopID)
-	
+
 	queue, err := queueService.CallNextNumber(shopID)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
+
 	response.Success(c, queue)
 }
 
@@ -167,12 +167,12 @@ func CallNextNumber(c *gin.Context) {
 func ToggleQueuePause(c *gin.Context) {
 	// 从上下文获取店铺ID
 	shopID := c.GetUint(middleware.ContextShopID)
-	
+
 	shop, err := queueService.ToggleQueuePause(shopID)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
+
 	response.Success(c, shop)
-} 
+}

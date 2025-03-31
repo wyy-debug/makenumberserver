@@ -1,8 +1,8 @@
 package mysql
 
 import (
-	"henna-queue/internal/model"
-	"henna-queue/pkg/db"
+	"example.com/henna-queue/internal/model"
+	"example.com/henna-queue/pkg/db"
 )
 
 type ShopRepository struct{}
@@ -44,4 +44,4 @@ func (r *ShopRepository) Update(shop *model.Shop) error {
 // Delete 删除店铺
 func (r *ShopRepository) Delete(id uint) error {
 	return db.DB.Delete(&model.Shop{}, id).Error
-} 
+}

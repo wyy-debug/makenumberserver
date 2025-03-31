@@ -1,8 +1,8 @@
 package mysql
 
 import (
-	"henna-queue/internal/model"
-	"henna-queue/pkg/db"
+	"example.com/henna-queue/internal/model"
+	"example.com/henna-queue/pkg/db"
 )
 
 type FavoriteRepository struct{}
@@ -36,10 +36,10 @@ func (r *FavoriteRepository) GetUserFavorites(userID string, page, pageSize int)
 	offset := (page - 1) * pageSize
 	var designs []*model.TattooDesign
 	var total int64
-	
+
 	// 获取总数
 	db.DB.Model(&model.Favorite{}).Where("user_id = ?", userID).Count(&total)
-	
+
 	// 获取分页数据
 	result := db.DB.Model(&model.Favorite{}).
 		Select("tattoo_designs.*").
@@ -49,10 +49,10 @@ func (r *FavoriteRepository) GetUserFavorites(userID string, page, pageSize int)
 		Offset(offset).
 		Limit(pageSize).
 		Find(&designs)
-	
+
 	if result.Error != nil {
 		return nil, 0, result.Error
 	}
-	
+
 	return designs, int(total), nil
-} 
+}
