@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创建管理员 - 海娜纹身排队系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        .register-container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background-color: #6c5ce7;
+            color: white;
+            text-align: center;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 20px;
+        }
+        .logo {
+            margin-bottom: 15px;
+            font-size: 48px;
+        }
+        .form-control {
+            padding: 12px;
+            border-radius: 6px;
+        }
+        .btn-primary {
+            background-color: #6c5ce7;
+            border-color: #6c5ce7;
+            padding: 12px;
+        }
+        .btn-primary:hover {
+            background-color: #5b4cc4;
+            border-color: #5b4cc4;
+        }
+        .bottom-text {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .alert {
+            display: none;
+        }
+        .first-admin-notice {
+            color: #dc3545;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container register-container">
+        <div class="card">
+            <div class="card-header">
+                <div class="logo"><i class="bi bi-flower1"></i></div>
+                <h3>创建管理员账号</h3>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-danger" id="errorAlert" role="alert"></div>
+                <div class="alert alert-success" id="successAlert" role="alert"></div>
+                
+                <div class="first-admin-notice" id="firstAdminNotice">
+                    <i class="bi bi-exclamation-triangle-fill"></i> 首次注册的账号将成为系统超级管理员
+                </div>
+                
+                <form id="registerForm">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">用户名</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="username" placeholder="请输入用户名，4-20个字符" required minlength="4" maxlength="20">
+                        </div>
+                        <div class="form-text">用户名将用于登录系统，创建后不可更改</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">密码</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" id="password" placeholder="请输入密码，至少6位" required minlength="6">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="confirmPassword" class="form-label">确认密码</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                            <input type="password" class="form-control" id="confirmPassword" placeholder="请再次输入密码" required>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-primary btn-block" id="registerBtn">
+                            创建管理员账号
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="bottom-text">
+                    <p class="mb-0">已有账号？<a href="login.html" class="text-decoration-none">返回登录</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/common.js"></script>
+    <script>
+        $(document).ready(function() {
+            // 检查是否已登录
+            const token = localStorage.getItem('token');
+            if (token) {
+                window.location.href = 'dashboard/index.html';
+                return;
+            }
+            
+            // 检查是否已存在管理员账号
+            checkExistingAdmin();
+            
+            // 注册表单提交
+            $('#registerForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const username = $('#username').val().trim();
+                const password = $('#password').val();
+                const confirmPassword = $('#confirmPassword').val();
+                
+                // 表单验证
+                if (username.length < 4) {
+                    showError('用户名长度不能少于4个字符');
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    showError('密码长度不能少于6个字符');
+                    return;
+                }
+                
+                if (password !== confirmPassword) {
+                    showError('两次输入的密码不一致');
+                    return;
+                }
+                
+                // 禁用注册按钮，显示加载状态
+                const $registerBtn = $('#registerBtn');
+                $registerBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 创建中...');
+                
+                // 发送注册请求
+                $.ajax({
+                    url: API_BASE_URL + '/api/admin/register',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        username: username,
+                        password: password,
+                        role: 2  // 超级管理员角色
+                    }),
+                    success: function(res) {
+                        if (res.code === 0) {
+                            showSuccess('管理员账号创建成功！3秒后将跳转到登录页面...');
+                            
+                            // 3秒后跳转到登录页
+                            setTimeout(function() {
+                                window.location.href = 'login.html';
+                            }, 3000);
+                        } else {
+                            showError(res.msg || '注册失败，请稍后再试');
+                            $registerBtn.prop('disabled', false).text('创建管理员账号');
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMsg = '服务器错误，请稍后再试';
+                        if (xhr.responseJSON && xhr.responseJSON.msg) {
+                            errorMsg = xhr.responseJSON.msg;
+                        }
+                        showError(errorMsg);
+                        $registerBtn.prop('disabled', false).text('创建管理员账号');
+                    }
+                });
+            });
+            
+            // 检查是否已存在管理员账号
+            function checkExistingAdmin() {
+                $.ajax({
+                    url: API_BASE_URL + '/api/admin/check-exists',
+                    type: 'GET',
+                    success: function(res) {
+                        if (res.code === 0 && res.data.exists) {
+                            // 如果已存在管理员账号，修改页面内容
+                            $('#firstAdminNotice').hide();
+                            $('#registerBtn').text('管理员账号已存在').prop('disabled', true);
+                            showError('系统已存在管理员账号，不能再创建超级管理员！请联系现有管理员添加您的账号。');
+                            
+                            // 3秒后跳转到登录页
+                            setTimeout(function() {
+                                window.location.href = 'login.html';
+                            }, 3000);
+                        }
+                    },
+                    error: function() {
+                        // 检查失败，假设不存在管理员
+                        console.log('检查管理员失败，假设不存在管理员');
+                    }
+                });
+            }
+            
+            // 显示错误信息
+            function showError(message) {
+                $('#errorAlert').text(message).fadeIn();
+                $('#successAlert').hide();
+                setTimeout(function() {
+                    $('#errorAlert').fadeOut();
+                }, 5000);
+            }
+            
+            // 显示成功信息
+            function showSuccess(message) {
+                $('#successAlert').text(message).fadeIn();
+                $('#errorAlert').hide();
+            }
+        });
+    </script>
+</body>
+</html> 

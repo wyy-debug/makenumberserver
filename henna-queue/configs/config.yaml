@@ -1,0 +1,28 @@
+app:
+  name: "henna-queue-api"
+  port: "8080"
+  mode: "development" # development or production
+  jwt_secret: "your-secret-key-here"
+  jwt_expiration: 604800 # 7 days in seconds
+
+mysql:
+  host: "localhost"
+  port: 3306
+  username: "henna"
+  password: "password"
+  database: "henna_queue"
+  charset: "utf8mb4"
+  loc: "Local"
+  max_idle_conns: 10
+  max_open_conns: 100
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+
+wechat:
+  app_id: "your-app-id"
+  app_secret: "your-app-secret"
+  template_id: "your-template-id" 

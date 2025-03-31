@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 海娜纹身排队系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        .login-container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background-color: #6c5ce7;
+            color: white;
+            text-align: center;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 20px;
+        }
+        .logo {
+            margin-bottom: 15px;
+            font-size: 48px;
+        }
+        .form-control {
+            padding: 12px;
+            border-radius: 6px;
+        }
+        .btn-primary {
+            background-color: #6c5ce7;
+            border-color: #6c5ce7;
+            padding: 12px;
+        }
+        .btn-primary:hover {
+            background-color: #5b4cc4;
+            border-color: #5b4cc4;
+        }
+        .bottom-text {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .alert {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container login-container">
+        <div class="card">
+            <div class="card-header">
+                <div class="logo"><i class="bi bi-flower1"></i></div>
+                <h3>海娜纹身管理系统</h3>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-danger" id="errorAlert" role="alert"></div>
+                
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">用户名</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="username" placeholder="请输入用户名" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="password" class="form-label">密码</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" id="password" placeholder="请输入密码" required>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+                            登录系统
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="bottom-text">
+                    <p class="mb-0">没有管理员账号？<a href="register.html" class="text-decoration-none">创建管理员</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/common.js"></script>
+    <script>
+        $(document).ready(function() {
+            // 检查是否已登录，如果已登录，跳转到dashboard
+            const token = localStorage.getItem('token');
+            if (token) {
+                window.location.href = 'dashboard/index.html';
+                return;
+            }
+            
+            // 登录表单提交
+            $('#loginForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const username = $('#username').val().trim();
+                const password = $('#password').val();
+                
+                // 简单验证
+                if (!username || !password) {
+                    showError('用户名和密码不能为空');
+                    return;
+                }
+                
+                // 禁用登录按钮，显示加载状态
+                const $loginBtn = $('#loginBtn');
+                $loginBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 登录中...');
+                
+                // 发送登录请求
+                $.ajax({
+                    url: API_BASE_URL + '/api/admin/login',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        username: username,
+                        password: password
+                    }),
+                    success: function(res) {
+                        if (res.code === 0) {
+                            // 保存token和用户信息
+                            localStorage.setItem('token', res.data.token);
+                            localStorage.setItem('admin_username', username);
+                            localStorage.setItem('admin_role', res.data.role);
+                            
+                            // 跳转到仪表盘
+                            window.location.href = 'dashboard/index.html';
+                        } else {
+                            showError(res.msg || '用户名或密码错误');
+                            $loginBtn.prop('disabled', false).text('登录系统');
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMsg = '服务器错误，请稍后再试';
+                        if (xhr.responseJSON && xhr.responseJSON.msg) {
+                            errorMsg = xhr.responseJSON.msg;
+                        }
+                        showError(errorMsg);
+                        $loginBtn.prop('disabled', false).text('登录系统');
+                    }
+                });
+            });
+            
+            // 显示错误信息
+            function showError(message) {
+                $('#errorAlert').text(message).fadeIn();
+                setTimeout(function() {
+                    $('#errorAlert').fadeOut();
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html> 
