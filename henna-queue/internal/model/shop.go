@@ -12,7 +12,10 @@ type Shop struct {
 	Phone         string    `json:"phone" gorm:"size:20"`
 	BusinessHours string    `json:"business_hours" gorm:"size:100"`
 	Address       string    `json:"address" gorm:"size:200"`
-	ImageURL      string    `json:"image_url" gorm:"size:255"`
+	Latitude      float64   `json:"latitude" gorm:"type:decimal(10,7)"`
+	Longitude     float64   `json:"longitude" gorm:"type:decimal(10,7)"`
+	CoverImage    string    `json:"cover_image" gorm:"size:255"`
+	Rating        float64   `json:"rating" gorm:"type:decimal(2,1);default:5.0"`
 	Status        int       `json:"status" gorm:"default:1"` // 1: 营业中, 0: 已关闭
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
