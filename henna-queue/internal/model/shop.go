@@ -4,20 +4,26 @@ import (
 	"time"
 )
 
+// Shop 店铺模型
 type Shop struct {
-	ID            uint      `gorm:"primaryKey" json:"id"`
-	Name          string    `gorm:"type:varchar(100);not null" json:"name"`
-	Address       string    `gorm:"type:varchar(255);not null" json:"address"`
-	Latitude      float64   `gorm:"type:decimal(10,7)" json:"latitude"`
-	Longitude     float64   `gorm:"type:decimal(10,7)" json:"longitude"`
-	Phone         string    `gorm:"type:varchar(20)" json:"phone"`
-	BusinessHours string    `gorm:"type:varchar(100)" json:"business_hours"`
-	Description   string    `gorm:"type:text" json:"description"`
-	CoverImage    string    `gorm:"type:varchar(255)" json:"cover_image"`
-	Rating        float64   `gorm:"type:decimal(2,1);default:5.0" json:"rating"`
-	Status        int8      `gorm:"type:tinyint;default:1" json:"status"` // 1: 营业中, 0: 休息中
+	ID            uint      `json:"id" gorm:"primaryKey"`
+	Name          string    `json:"name" gorm:"size:100;not null"`
+	Description   string    `json:"description" gorm:"type:text"`
+	Phone         string    `json:"phone" gorm:"size:20"`
+	BusinessHours string    `json:"business_hours" gorm:"size:100"`
+	Address       string    `json:"address" gorm:"size:200"`
+	ImageURL      string    `json:"image_url" gorm:"size:255"`
+	Status        int       `json:"status" gorm:"default:1"` // 1: 营业中, 0: 已关闭
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+// ShopStats 店铺统计信息
+type ShopStats struct {
+	TodayQueueCount     int     `json:"today_queue_count"`
+	TodayCompletedCount int     `json:"today_completed_count"`
+	AvgWaitTime         int     `json:"avg_wait_time"` // 平均等待时间（分钟）
+	CancelRate          float64 `json:"cancel_rate"`   // 取消率（百分比）
 }
 
 type Service struct {
@@ -30,4 +36,4 @@ type Service struct {
 	SortOrder   int       `gorm:"default:0" json:"sort_order"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
-} 
+}

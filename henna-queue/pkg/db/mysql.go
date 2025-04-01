@@ -15,13 +15,13 @@ var DB *gorm.DB
 // InitMySQL 初始化MySQL连接
 func InitMySQL() error {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True&loc=%s",
-		viper.GetString("mysql.username"),
-		viper.GetString("mysql.password"),
-		viper.GetString("mysql.host"),
-		viper.GetInt("mysql.port"),
-		viper.GetString("mysql.database"),
-		viper.GetString("mysql.charset"),
-		viper.GetString("mysql.loc"))
+		viper.GetString("database.username"),
+		viper.GetString("database.password"),
+		viper.GetString("database.host"),
+		viper.GetInt("database.port"),
+		viper.GetString("database.dbname"),
+		viper.GetString("database.charset"),
+		viper.GetString("database.loc"))
 
 	logLevel := logger.Silent
 	if viper.GetString("app.mode") == "development" {
@@ -59,4 +59,4 @@ func CloseMySQL() {
 			sqlDB.Close()
 		}
 	}
-} 
+}

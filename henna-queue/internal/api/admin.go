@@ -189,3 +189,39 @@ func DeleteAdmin(c *gin.Context) {
 
 	response.Success(c, nil)
 }
+
+// CheckAdminExists 检查管理员是否存在
+func CheckAdminExists(c *gin.Context) {
+	exists, err := adminService.CheckAdminExists()
+	if err != nil {
+		response.ServerError(c, err.Error())
+		return
+	}
+
+	response.Success(c, gin.H{"exists": exists})
+}
+
+// RegisterAdmin 注册管理员
+func RegisterAdmin(c *gin.Context) {
+	var req struct {
+		Username string `json:"username" binding:"required"`
+		Password string `json:"password" binding:"required"`
+		ShopName string `json:"shop_name" binding:"required"`
+		ShopDesc string `json:"shop_desc"`
+		Phone    string `json:"phone"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "请求参数错误")
+		return
+	}
+
+	// 创建管理员账号，无论是否已存在管理员
+	admin, err := adminService.RegisterAdmin(req.Username, req.Password, req.ShopName, req.ShopDesc, req.Phone)
+	if err != nil {
+		response.ServerError(c, err.Error())
+		return
+	}
+
+	response.Success(c, admin)
+}

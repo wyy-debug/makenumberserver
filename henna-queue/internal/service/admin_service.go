@@ -14,12 +14,14 @@ import (
 type AdminService struct {
 	adminRepo     repository.AdminRepository
 	statisticRepo repository.StatisticRepository
+	shopRepo      repository.ShopRepository
 }
 
 func NewAdminService() *AdminService {
 	return &AdminService{
 		adminRepo:     factory.NewAdminRepository(),
 		statisticRepo: factory.NewStatisticRepository(),
+		shopRepo:      factory.NewShopRepository(),
 	}
 }
 
@@ -243,4 +245,55 @@ func (s *AdminService) GetStatistics(shopID uint, days int) (*model.StatisticsRe
 		Trend:      trend,
 		Comparison: comparison,
 	}, nil
+}
+
+// CheckAdminExists 检查是否存在任何管理员账号
+func (s *AdminService) CheckAdminExists() (bool, error) {
+	admins, err := s.adminRepo.GetAll()
+	if err != nil {
+		return false, err
+	}
+
+	return len(admins) > 0, nil
+}
+
+// RegisterAdmin 注册管理员（首次设置）
+func (s *AdminService) RegisterAdmin(username, password, shopName, shopDesc, phone string) (*model.Admin, error) {
+	// 创建店铺
+	shop := &model.Shop{
+		Name:        shopName,
+		Description: shopDesc,
+		Phone:       phone,
+		Status:      1, // 1 表示营业中
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	err := s.shopRepo.Create(shop)
+	if err != nil {
+		return nil, err
+	}
+
+	// 加密密码
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	// 创建管理员（角色1表示店铺管理员）
+	admin := &model.Admin{
+		Username:     username,
+		PasswordHash: string(hashedPassword),
+		ShopID:       &shop.ID,
+		Role:         1,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+
+	err = s.adminRepo.Create(admin)
+	if err != nil {
+		return nil, err
+	}
+
+	return admin, nil
 }

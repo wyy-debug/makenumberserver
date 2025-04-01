@@ -65,7 +65,7 @@ function loadDesigns() {
 
     // 发送请求到管理员API
     $.ajax({
-        url: API_BASE_URL + '/api/admin/designs',
+        url: API_BASE_URL + '/api/v1/admin/designs',
         type: 'GET',
         data: params,
         headers: getAuthHeaders(),
@@ -167,7 +167,7 @@ function saveDesign() {
     
     // 发送请求
     $.ajax({
-        url: API_BASE_URL + `/api/admin/designs${isEdit ? '/' + designId : ''}`,
+        url: API_BASE_URL + `/api/v1/admin/designs${isEdit ? '/' + designId : ''}`,
         type: isEdit ? 'PUT' : 'POST',
         data: formData,
         headers: getAuthHeaders(),
@@ -203,7 +203,7 @@ function editDesign(id) {
     
     // 获取图案详情
     $.ajax({
-        url: API_BASE_URL + `/api/admin/designs/${id}`,
+        url: API_BASE_URL + `/api/v1/admin/designs/${id}`,
         type: 'GET',
         headers: getAuthHeaders(),
         success: function(res) {
@@ -239,7 +239,7 @@ function editDesign(id) {
 function deleteDesign(id) {
     if (confirm('确定要删除这个图案吗？此操作不可恢复。')) {
         $.ajax({
-            url: API_BASE_URL + `/api/admin/designs/${id}`,
+            url: API_BASE_URL + `/api/v1/admin/designs/${id}`,
             type: 'DELETE',
             headers: getAuthHeaders(),
             success: function(res) {

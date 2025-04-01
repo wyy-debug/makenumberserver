@@ -58,7 +58,7 @@ function loadMerchants(page, pageSize, keyword) {
     }
     
     $.ajax({
-        url: API_BASE_URL + '/api/admin/shops?' + params.toString(),
+        url: API_BASE_URL + '/api/v1/admin/shops?' + params.toString(),
         type: 'GET',
         headers: {
             'Authorization': 'Bearer ' + token
@@ -135,7 +135,7 @@ function deleteMerchant(merchantId) {
     const token = localStorage.getItem('token');
     
     $.ajax({
-        url: API_BASE_URL + `/api/admin/shops/${merchantId}`,
+        url: API_BASE_URL + `/api/v1/admin/shops/${merchantId}`,
         type: 'DELETE',
         headers: {
             'Authorization': 'Bearer ' + token

@@ -6,13 +6,13 @@ server:
 # 数据库配置
 database:
   driver: mysql
-  host: localhost
+  host: "localhost"
   port: 3306
   username: "root"
   password: "root"
-  dbname: henna_queue
-  charset: utf8mb4
-  loc: Local
+  dbname: "henna_queue"
+  charset: "utf8mb4"
+  loc: "Local"
   parseTime: true
 
 # Redis配置

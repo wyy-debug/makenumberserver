@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设计管理 - 海娜纹身排队系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background-color: #343a40;
+            padding-top: 20px;
+        }
+        .sidebar .nav-link {
+            color: #fff;
+            padding: 10px 20px;
+            margin: 5px 0;
+        }
+        .sidebar .nav-link:hover {
+            background-color: #495057;
+        }
+        .sidebar .nav-link.active {
+            background-color: #0d6efd;
+        }
+        .main-content {
+            padding: 20px;
+        }
+        .design-card {
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        .design-card:hover {
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .design-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-2 sidebar">
+                <h4 class="text-white text-center mb-4">管理面板</h4>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">
+                            <i class="bi bi-speedometer2"></i> 仪表盘
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="queue.html">
+                            <i class="bi bi-list-queue"></i> 排队管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="designs.html">
+                            <i class="bi bi-palette"></i> 设计管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="services.html">
+                            <i class="bi bi-scissors"></i> 服务管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="shop.html">
+                            <i class="bi bi-shop"></i> 店铺管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="settings.html">
+                            <i class="bi bi-gear"></i> 系统设置
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 主要内容区 -->
+            <div class="col-md-10 main-content">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>设计管理</h2>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-primary" id="refreshBtn">
+                            <i class="bi bi-arrow-clockwise"></i> 刷新
+                        </button>
+                        <button class="btn btn-primary" id="addDesignBtn">
+                            <i class="bi bi-plus-lg"></i> 上传设计
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 筛选器 -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label class="form-label">分类</label>
+                                <select class="form-select" id="categoryFilter">
+                                    <option value="">全部</option>
+                                    <option value="1">传统纹身</option>
+                                    <option value="2">现代纹身</option>
+                                    <option value="3">几何纹身</option>
+                                    <option value="4">其他</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">价格范围</label>
+                                <select class="form-select" id="priceFilter">
+                                    <option value="">全部</option>
+                                    <option value="1">0-100元</option>
+                                    <option value="2">100-300元</option>
+                                    <option value="3">300-500元</option>
+                                    <option value="4">500元以上</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">搜索</label>
+                                <input type="text" class="form-control" id="searchInput" placeholder="输入关键词">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">&nbsp;</label>
+                                <button class="btn btn-primary w-100" id="filterBtn">
+                                    <i class="bi bi-search"></i> 筛选
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 设计列表 -->
+                <div class="row" id="designList">
+                    <!-- 设计卡片将通过JavaScript动态加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 上传设计模态框 -->
+    <div class="modal fade" id="addDesignModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">上传设计</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addDesignForm">
+                        <div class="mb-3">
+                            <label class="form-label">设计名称</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">分类</label>
+                            <select class="form-select" name="category_id" required>
+                                <option value="1">传统纹身</option>
+                                <option value="2">现代纹身</option>
+                                <option value="3">几何纹身</option>
+                                <option value="4">其他</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">价格</label>
+                            <input type="number" class="form-control" name="price" required min="0" step="0.01">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">描述</label>
+                            <textarea class="form-control" name="description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">设计图片</label>
+                            <input type="file" class="form-control" name="image" accept="image/*" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="submitDesignBtn">上传</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑设计模态框 -->
+    <div class="modal fade" id="editDesignModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑设计</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editDesignForm">
+                        <input type="hidden" name="id">
+                        <div class="mb-3">
+                            <label class="form-label">设计名称</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">分类</label>
+                            <select class="form-select" name="category_id" required>
+                                <option value="1">传统纹身</option>
+                                <option value="2">现代纹身</option>
+                                <option value="3">几何纹身</option>
+                                <option value="4">其他</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">价格</label>
+                            <input type="number" class="form-control" name="price" required min="0" step="0.01">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">描述</label>
+                            <textarea class="form-control" name="description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">设计图片</label>
+                            <input type="file" class="form-control" name="image" accept="image/*">
+                            <small class="text-muted">如果不修改图片，请留空</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="updateDesignBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/common.js"></script>
+    <script>
+        // 检查登录状态
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '../login.html';
+            }
+        }
+
+        // 加载设计列表
+        function loadDesignList() {
+            const category = $('#categoryFilter').val();
+            const price = $('#priceFilter').val();
+            const search = $('#searchInput').val();
+
+            $.ajax({
+                url: API_BASE_URL + '/api/v1/designs',
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                },
+                data: {
+                    category_id: category,
+                    price_range: price,
+                    search: search
+                },
+                success: function(res) {
+                    if (res.code === 200) {
+                        const designList = $('#designList');
+                        designList.empty();
+
+                        res.data.forEach(design => {
+                            const card = createDesignCard(design);
+                            designList.append(card);
+                        });
+                    } else {
+                        showError(res.message || '加载设计列表失败');
+                    }
+                },
+                error: function() {
+                    showError('加载设计列表失败');
+                }
+            });
+        }
+
+        // 创建设计卡片
+        function createDesignCard(design) {
+            const categoryMap = {
+                1: '传统纹身',
+                2: '现代纹身',
+                3: '几何纹身',
+                4: '其他'
+            };
+
+            return `
+                <div class="col-md-4 col-lg-3">
+                    <div class="card design-card">
+                        <img src="${design.image_url}" class="card-img-top design-image" alt="${design.name}">
+                        <div class="card-body">
+                            <h5 class="card-title">${design.name}</h5>
+                            <p class="card-text">
+                                <small class="text-muted">分类：${categoryMap[design.category_id]}</small><br>
+                                <small class="text-muted">价格：￥${design.price}</small>
+                            </p>
+                            <div class="btn-group w-100">
+                                <button class="btn btn-outline-primary" onclick="editDesign(${design.id})">
+                                    <i class="bi bi-pencil"></i> 编辑
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteDesign(${design.id})">
+                                    <i class="bi bi-trash"></i> 删除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 编辑设计
+        function editDesign(id) {
+            $.ajax({
+                url: API_BASE_URL + `/api/v1/designs/${id}`,
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                },
+                success: function(res) {
+                    if (res.code === 200) {
+                        const design = res.data;
+                        const form = $('#editDesignForm');
+                        form.find('[name="id"]').val(design.id);
+                        form.find('[name="name"]').val(design.name);
+                        form.find('[name="category_id"]').val(design.category_id);
+                        form.find('[name="price"]').val(design.price);
+                        form.find('[name="description"]').val(design.description);
+                        $('#editDesignModal').modal('show');
+                    } else {
+                        showError(res.message || '加载设计详情失败');
+                    }
+                },
+                error: function() {
+                    showError('加载设计详情失败');
+                }
+            });
+        }
+
+        // 删除设计
+        function deleteDesign(id) {
+            if (confirm('确定要删除这个设计吗？')) {
+                $.ajax({
+                    url: API_BASE_URL + `/api/v1/designs/${id}`,
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    },
+                    success: function(res) {
+                        if (res.code === 200) {
+                            loadDesignList();
+                            showSuccess('设计已删除');
+                        } else {
+                            showError(res.message || '删除失败');
+                        }
+                    },
+                    error: function() {
+                        showError('删除失败');
+                    }
+                });
+            }
+        }
+
+        // 显示成功消息
+        function showSuccess(message) {
+            alert(message);
+        }
+
+        // 显示错误消息
+        function showError(message) {
+            alert(message);
+        }
+
+        // 页面加载完成后执行
+        $(document).ready(function() {
+            checkAuth();
+            loadDesignList();
+
+            // 绑定事件
+            $('#refreshBtn').click(loadDesignList);
+            $('#filterBtn').click(loadDesignList);
+            $('#addDesignBtn').click(function() {
+                $('#addDesignModal').modal('show');
+            });
+            $('#submitDesignBtn').click(function() {
+                const formData = new FormData($('#addDesignForm')[0]);
+                $.ajax({
+                    url: API_BASE_URL + '/api/v1/designs',
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    },
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(res) {
+                        if (res.code === 200) {
+                            $('#addDesignModal').modal('hide');
+                            loadDesignList();
+                            showSuccess('设计上传成功');
+                        } else {
+                            showError(res.message || '上传失败');
+                        }
+                    },
+                    error: function() {
+                        showError('上传失败');
+                    }
+                });
+            });
+            $('#updateDesignBtn').click(function() {
+                const formData = new FormData($('#editDesignForm')[0]);
+                const id = formData.get('id');
+                $.ajax({
+                    url: API_BASE_URL + `/api/v1/designs/${id}`,
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    },
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(res) {
+                        if (res.code === 200) {
+                            $('#editDesignModal').modal('hide');
+                            loadDesignList();
+                            showSuccess('设计更新成功');
+                        } else {
+                            showError(res.message || '更新失败');
+                        }
+                    },
+                    error: function() {
+                        showError('更新失败');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

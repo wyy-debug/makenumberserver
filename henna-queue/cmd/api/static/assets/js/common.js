@@ -1,5 +1,5 @@
 // API基础URL，根据您的实际部署环境修改
-const API_BASE_URL = 'http://localhost:8080';
+const API_BASE_URL = 'http://124.220.48.103:8080';
 
 // Toast通知
 function showToast(message, type = 'success') {
@@ -59,7 +59,7 @@ function checkSuperAdminAuth() {
     }
     
     $.ajax({
-        url: API_BASE_URL + '/api/admin/profile',
+        url: API_BASE_URL + '/api/v1/admin/profile',
         type: 'GET',
         headers: {
             'Authorization': 'Bearer ' + token

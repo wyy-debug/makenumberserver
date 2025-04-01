@@ -7,26 +7,13 @@ $(document).ready(function() {
     // 检查超级管理员权限
     checkSuperAdminAuth();
     
-    // 获取商户ID
-    const shopId = getUrlParam('id');
-    if (!shopId) {
-        showToast('商户ID不存在', 'error');
-        setTimeout(() => {
-            window.location.href = './index.html';
-        }, 1500);
-        return;
-    }
-    
-    // 加载商户信息
-    loadMerchantInfo(shopId);
-    
     // 图片预览
     $('#coverImage').on('change', function(e) {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                $('#coverPreview').attr('src', e.target.result);
+                $('#coverPreview').attr('src', e.target.result).show();
             };
             reader.readAsDataURL(file);
         }
@@ -56,8 +43,7 @@ $(document).ready(function() {
                 latitude: parseFloat($('#latitude').val()) || 0,
                 longitude: parseFloat($('#longitude').val()) || 0,
                 business_hours: $('#businessHours').val(),
-                description: $('#description').val(),
-                status: parseInt($('#status').val())
+                description: $('#description').val()
             };
             
             // 处理图片上传
@@ -67,10 +53,10 @@ $(document).ready(function() {
             }
             
             // 发送API请求
-            await updateMerchant(shopId, formData);
+            await createMerchant(formData);
             
             // 提示成功并返回列表页
-            showToast('商户信息更新成功');
+            showToast('商户添加成功');
             setTimeout(() => {
                 window.location.href = './index.html';
             }, 1500);
@@ -96,64 +82,14 @@ $(document).ready(function() {
     });
 });
 
-// 加载商户信息
-function loadMerchantInfo(shopId) {
-    const token = localStorage.getItem('token');
-    
-    $.ajax({
-        url: API_BASE_URL + `/api/admin/shops/${shopId}`,
-        type: 'GET',
-        headers: {
-            'Authorization': 'Bearer ' + token
-        },
-        success: function(res) {
-            if (res.code === 200) {
-                fillMerchantForm(res.data);
-            } else {
-                showToast(res.message || '加载商户信息失败', 'error');
-            }
-        },
-        error: function(xhr) {
-            console.error('加载商户信息失败', xhr);
-            showToast('加载商户信息失败', 'error');
-            
-            if (xhr.status === 401) {
-                window.location.href = '../login.html';
-            } else if (xhr.status === 404) {
-                showToast('商户不存在', 'error');
-                setTimeout(() => {
-                    window.location.href = './index.html';
-                }, 1500);
-            }
-        }
-    });
-}
-
-// 填充表单
-function fillMerchantForm(shop) {
-    $('#shopId').val(shop.id);
-    $('#shopName').val(shop.name);
-    $('#phone').val(shop.phone);
-    $('#address').val(shop.address);
-    $('#latitude').val(shop.latitude);
-    $('#longitude').val(shop.longitude);
-    $('#businessHours').val(shop.business_hours);
-    $('#description').val(shop.description);
-    $('#status').val(shop.status.toString());
-    
-    if (shop.cover_image) {
-        $('#coverPreview').attr('src', shop.cover_image).show();
-    }
-}
-
-// 更新商户
-async function updateMerchant(shopId, data) {
+// 创建商户
+async function createMerchant(data) {
     const token = localStorage.getItem('token');
     
     return new Promise((resolve, reject) => {
         $.ajax({
-            url: API_BASE_URL + `/api/admin/shops/${shopId}`,
-            type: 'PUT',
+            url: API_BASE_URL + '/api/v1/admin/shops',
+            type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(data),
             headers: {
@@ -163,11 +99,11 @@ async function updateMerchant(shopId, data) {
                 if (res.code === 200) {
                     resolve(res.data);
                 } else {
-                    reject(res.message || '更新商户失败');
+                    reject(res.message || '创建商户失败');
                 }
             },
             error: function(xhr) {
-                console.error('更新商户失败', xhr);
+                console.error('创建商户失败', xhr);
                 reject(xhr.responseJSON?.message || '服务器错误，请稍后再试');
                 
                 if (xhr.status === 401) {

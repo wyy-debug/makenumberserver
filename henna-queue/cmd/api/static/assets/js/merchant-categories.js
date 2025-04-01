@@ -35,7 +35,7 @@ function loadCategories() {
     $('#categoryList').html('<tr><td colspan="5" class="text-center py-3"><div class="spinner-border spinner-border-sm" role="status"></div> 加载中...</td></tr>');
 
     $.ajax({
-        url: API_BASE_URL + '/api/admin/categories',
+        url: API_BASE_URL + '/api/v1/admin/categories',
         type: 'GET',
         data: { shop_id: categoryShopId },
         headers: getAuthHeaders(),
@@ -162,7 +162,7 @@ function saveCategory() {
     
     // 发送请求
     $.ajax({
-        url: API_BASE_URL + `/api/admin/categories${isEdit ? '/' + categoryId : ''}`,
+        url: API_BASE_URL + `/api/v1/admin/categories${isEdit ? '/' + categoryId : ''}`,
         type: isEdit ? 'PUT' : 'POST',
         data: JSON.stringify(data),
         headers: getAuthHeaders(),
@@ -222,7 +222,7 @@ function deleteCategory(id) {
     
     if (confirm(`确定要删除 "${category.name}" 分类吗？此操作不可恢复，该分类下的图案将被设为"其他"分类。`)) {
         $.ajax({
-            url: API_BASE_URL + `/api/admin/categories/${id}`,
+            url: API_BASE_URL + `/api/v1/admin/categories/${id}`,
             type: 'DELETE',
             headers: getAuthHeaders(),
             success: function(res) {

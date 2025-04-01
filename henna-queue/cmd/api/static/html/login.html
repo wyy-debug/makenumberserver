@@ -127,7 +127,7 @@
                 
                 // 发送登录请求
                 $.ajax({
-                    url: API_BASE_URL + '/api/admin/login',
+                    url: API_BASE_URL + '/api/v1/admin/auth/login',
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify({
@@ -135,7 +135,7 @@
                         password: password
                     }),
                     success: function(res) {
-                        if (res.code === 0) {
+                        if (res.code === 200) {
                             // 保存token和用户信息
                             localStorage.setItem('token', res.data.token);
                             localStorage.setItem('admin_username', username);
@@ -144,7 +144,7 @@
                             // 跳转到仪表盘
                             window.location.href = 'dashboard/index.html';
                         } else {
-                            showError(res.msg || '用户名或密码错误');
+                            showError(res.message || '用户名或密码错误');
                             $loginBtn.prop('disabled', false).text('登录系统');
                         }
                     },

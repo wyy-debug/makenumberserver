@@ -190,7 +190,7 @@ function loadMerchantDetail(shopId) {
     const token = localStorage.getItem('token');
     
     $.ajax({
-        url: API_BASE_URL + `/api/admin/shops/${shopId}`,
+        url: API_BASE_URL + `/api/v1/admin/shops/${shopId}`,
         type: 'GET',
         headers: {
             'Authorization': 'Bearer ' + token
@@ -251,7 +251,7 @@ function loadStatistics(shopId) {
     const token = localStorage.getItem('token');
     
     $.ajax({
-        url: API_BASE_URL + `/api/admin/shops/${shopId}/statistics`,
+        url: API_BASE_URL + `/api/v1/admin/shops/${shopId}/statistics`,
         type: 'GET',
         headers: {
             'Authorization': 'Bearer ' + token
@@ -300,7 +300,7 @@ function loadShopServices(shopId) {
     const token = localStorage.getItem('token');
     
     $.ajax({
-        url: API_BASE_URL + `/api/admin/shops/${shopId}/services`,
+        url: API_BASE_URL + `/api/v1/admin/shops/${shopId}/services`,
         type: 'GET',
         headers: {
             'Authorization': 'Bearer ' + token
@@ -363,7 +363,7 @@ function createService(shopId, data) {
     const token = localStorage.getItem('token');
     
     $.ajax({
-        url: API_BASE_URL + `/api/admin/shops/${shopId}/services`,
+        url: API_BASE_URL + `/api/v1/admin/shops/${shopId}/services`,
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(data),
@@ -392,7 +392,7 @@ function updateService(shopId, serviceId, data) {
     const token = localStorage.getItem('token');
     
     $.ajax({
-        url: API_BASE_URL + `/api/admin/shops/${shopId}/services/${serviceId}`,
+        url: API_BASE_URL + `/api/v1/admin/shops/${shopId}/services/${serviceId}`,
         type: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify(data),
@@ -421,7 +421,7 @@ function deleteService(shopId, serviceId) {
     const token = localStorage.getItem('token');
     
     $.ajax({
-        url: API_BASE_URL + `/api/admin/shops/${shopId}/services/${serviceId}`,
+        url: API_BASE_URL + `/api/v1/admin/shops/${shopId}/services/${serviceId}`,
         type: 'DELETE',
         headers: {
             'Authorization': 'Bearer ' + token
@@ -447,7 +447,7 @@ function loadShopAdmins(shopId) {
     const token = localStorage.getItem('token');
     
     $.ajax({
-        url: API_BASE_URL + `/api/admin/shops/${shopId}/admins`,
+        url: API_BASE_URL + `/api/v1/admin/shops/${shopId}/admins`,
         type: 'GET',
         headers: {
             'Authorization': 'Bearer ' + token
@@ -503,7 +503,7 @@ function createAdmin(data) {
     const token = localStorage.getItem('token');
     
     $.ajax({
-        url: API_BASE_URL + '/api/admin/admins',
+        url: API_BASE_URL + '/api/v1/admin/admins',
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(data),
@@ -533,7 +533,7 @@ function deleteAdmin(adminId) {
     const shopId = getUrlParam('id');
     
     $.ajax({
-        url: API_BASE_URL + `/api/admin/admins/${adminId}`,
+        url: API_BASE_URL + `/api/v1/admin/admins/${adminId}`,
         type: 'DELETE',
         headers: {
             'Authorization': 'Bearer ' + token
@@ -559,7 +559,7 @@ function loadQueueData(shopId) {
     const token = localStorage.getItem('token');
     
     $.ajax({
-        url: API_BASE_URL + `/api/admin/shops/${shopId}/queue`,
+        url: API_BASE_URL + `/api/v1/admin/shops/${shopId}/queue`,
         type: 'GET',
         headers: {
             'Authorization': 'Bearer ' + token
@@ -712,7 +712,7 @@ function toggleQueueStatus(shopId, status) {
     const token = localStorage.getItem('token');
     
     $.ajax({
-        url: API_BASE_URL + `/api/admin/shops/${shopId}/queue/status`,
+        url: API_BASE_URL + `/api/v1/admin/shops/${shopId}/queue/status`,
         type: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify({ status: status }),
@@ -745,7 +745,7 @@ function completeService(shopId, queueId) {
     const token = localStorage.getItem('token');
     
     $.ajax({
-        url: API_BASE_URL + `/api/admin/shops/${shopId}/queue/${queueId}/complete`,
+        url: API_BASE_URL + `/api/v1/admin/shops/${shopId}/queue/${queueId}/complete`,
         type: 'PUT',
         headers: {
             'Authorization': 'Bearer ' + token
@@ -772,7 +772,7 @@ function cancelService(shopId, queueId) {
     const token = localStorage.getItem('token');
     
     $.ajax({
-        url: API_BASE_URL + `/api/admin/shops/${shopId}/queue/${queueId}/cancel`,
+        url: API_BASE_URL + `/api/v1/admin/shops/${shopId}/queue/${queueId}/cancel`,
         type: 'PUT',
         headers: {
             'Authorization': 'Bearer ' + token
@@ -799,7 +799,7 @@ function callNextCustomer(shopId) {
     const token = localStorage.getItem('token');
     
     $.ajax({
-        url: API_BASE_URL + `/api/admin/shops/${shopId}/queue/next`,
+        url: API_BASE_URL + `/api/v1/admin/shops/${shopId}/queue/next`,
         type: 'PUT',
         headers: {
             'Authorization': 'Bearer ' + token
@@ -826,7 +826,7 @@ function callCustomer(shopId, queueId) {
     const token = localStorage.getItem('token');
     
     $.ajax({
-        url: API_BASE_URL + `/api/admin/shops/${shopId}/queue/${queueId}/call`,
+        url: API_BASE_URL + `/api/v1/admin/shops/${shopId}/queue/${queueId}/call`,
         type: 'PUT',
         headers: {
             'Authorization': 'Bearer ' + token

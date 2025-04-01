@@ -139,8 +139,8 @@ func Register(c *gin.Context) {
 	response.Success(c, admin)
 }
 
-// CheckAdminExists 检查是否存在管理员账号
-func CheckAdminExists(c *gin.Context) {
+// CheckSuperAdminExists 检查是否存在超级管理员账号
+func CheckSuperAdminExists(c *gin.Context) {
 	exists, err := adminService.CheckSuperAdminExists()
 	if err != nil {
 		response.ServerError(c, err.Error())
