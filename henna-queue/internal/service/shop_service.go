@@ -41,18 +41,17 @@ func (s *ShopService) CreateShop(shop *model.Shop) error {
 }
 
 // UpdateShop 更新店铺信息
-func (s *ShopService) UpdateShop(shopID uint, req interface{}) (*model.Shop, error) {
-	reqMap, ok := req.(*struct {
-		Name          string  `json:"name"`
-		Address       string  `json:"address"`
-		Latitude      float64 `json:"latitude"`
-		Longitude     float64 `json:"longitude"`
-		Phone         string  `json:"phone"`
-		BusinessHours string  `json:"business_hours"`
-		Description   string  `json:"description"`
-		CoverImage    string  `json:"cover_image"`
-	})
-	if !ok {
+func (s *ShopService) UpdateShop(shopID uint, req *struct {
+	Name          string  `json:"name"`
+	Address       string  `json:"address"`
+	Latitude      float64 `json:"latitude"`
+	Longitude     float64 `json:"longitude"`
+	Phone         string  `json:"phone"`
+	BusinessHours string  `json:"business_hours"`
+	Description   string  `json:"description"`
+	CoverImage    string  `json:"cover_image"`
+}) (*model.Shop, error) {
+	if req == nil {
 		return nil, errors.New("无效的请求参数")
 	}
 
@@ -62,36 +61,36 @@ func (s *ShopService) UpdateShop(shopID uint, req interface{}) (*model.Shop, err
 	}
 
 	// 更新字段
-	if reqMap.Name != "" {
-		shop.Name = reqMap.Name
+	if req.Name != "" {
+		shop.Name = req.Name
 	}
 
-	if reqMap.Address != "" {
-		shop.Address = reqMap.Address
+	if req.Address != "" {
+		shop.Address = req.Address
 	}
 
-	if reqMap.Latitude != 0 {
-		shop.Latitude = reqMap.Latitude
+	if req.Latitude != 0 {
+		shop.Latitude = req.Latitude
 	}
 
-	if reqMap.Longitude != 0 {
-		shop.Longitude = reqMap.Longitude
+	if req.Longitude != 0 {
+		shop.Longitude = req.Longitude
 	}
 
-	if reqMap.Phone != "" {
-		shop.Phone = reqMap.Phone
+	if req.Phone != "" {
+		shop.Phone = req.Phone
 	}
 
-	if reqMap.BusinessHours != "" {
-		shop.BusinessHours = reqMap.BusinessHours
+	if req.BusinessHours != "" {
+		shop.BusinessHours = req.BusinessHours
 	}
 
-	if reqMap.Description != "" {
-		shop.Description = reqMap.Description
+	if req.Description != "" {
+		shop.Description = req.Description
 	}
 
-	if reqMap.CoverImage != "" {
-		shop.CoverImage = reqMap.CoverImage
+	if req.CoverImage != "" {
+		shop.CoverImage = req.CoverImage
 	}
 
 	shop.UpdatedAt = time.Now()
