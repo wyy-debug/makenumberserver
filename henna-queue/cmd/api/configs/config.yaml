@@ -29,8 +29,8 @@ jwt:
 
 # 微信配置
 wechat:
-  appid: "your-appid"
-  secret: "your-app-secret"
+  appid: "wxf9d61803765313d6"
+  secret: "bc5047523df0488fd54d7676db7bc61b"
 
 # 上传配置
 upload:
