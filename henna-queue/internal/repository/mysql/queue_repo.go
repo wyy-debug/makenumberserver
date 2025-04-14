@@ -5,7 +5,6 @@ import (
 	"log"
 	"example.com/henna-queue/internal/model"
 	"example.com/henna-queue/pkg/db"
-	"errors"
 )
 
 type QueueRepository struct {

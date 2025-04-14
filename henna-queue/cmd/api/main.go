@@ -167,12 +167,12 @@ func setupRoutes(r *gin.Engine) {
 		}
 
 		// 图案相关
-		designs := public.Group("/designs")
-		{
-			designs.GET("", api.GetDesigns)
-			designs.GET("/:id", api.GetDesign)
-			designs.POST("", api.CreateDesign)
-		}
+		//designs := public.Group("/designs")
+		//{
+			//designs.GET("", api.GetDesigns)
+			//designs.GET("/:id", api.GetDesign)
+			//designs.POST("", api.CreateDesign)
+		//}
 
 		// 添加缺失的公共API路由
 		public.GET("/services", api.GetPublicSvcs)
@@ -203,8 +203,8 @@ func setupRoutes(r *gin.Engine) {
 		}
 
 		// 图案收藏
-		user.POST("/designs/:id/like", api.ToggleFavorite)
-		user.GET("/users/favorites", api.GetUserFavorites)
+		//user.POST("/designs/:id/like", api.ToggleFavorite)
+		//user.GET("/users/favorites", api.GetUserFavorites)
 
 		// 添加用户设置相关API
 		settings := user.Group("/settings")
@@ -232,10 +232,10 @@ func setupRoutes(r *gin.Engine) {
 
 		admin.GET("/statistics", api.GetStatistics)
 
-		admin.GET("/designs", api.GetAdminDesigns)
-		admin.POST("/designs", api.CreateDesign)
-		admin.PUT("/designs/:id", api.UpdateDesign)
-		admin.DELETE("/designs/:id", api.DeleteDesign)
+		//admin.GET("/designs", api.GetAdminDesigns)
+		//admin.POST("/designs", api.CreateDesign)
+		//admin.PUT("/designs/:id", api.UpdateDesign)
+		//admin.DELETE("/designs/:id", api.DeleteDesign)
 
 		admin.GET("/shop", api.GetAdminShop)
 		admin.PUT("/shop", api.UpdateShop)

@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"errors"
 	"example.com/henna-queue/internal/model"
 	"example.com/henna-queue/pkg/db"
 )
