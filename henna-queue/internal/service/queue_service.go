@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
+	"strconv"
 	"time"
 
 	"example.com/henna-queue/internal/model"
@@ -340,4 +342,63 @@ func (s *QueueService) GetAdminQueue(shopID uint) ([]*model.Queue, error) {
 	}
 
 	return queues, nil
+}
+
+// GetQueues 获取队列列表
+func (s *QueueService) GetQueues(shopID uint, status string, serviceID uint, date string, page, pageSize int) ([]map[string]interface{}, int64, error) {
+	// 这里应该有真实的数据库查询
+	// 以下是示例数据
+	var statusInt int8
+	if status != "" {
+		statusVal, err := strconv.ParseInt(status, 10, 8)
+		if err == nil {
+			statusInt = int8(statusVal)
+		}
+	}
+	
+	// 构造示例数据
+	queues := []map[string]interface{}{}
+	for i := 0; i < 5; i++ {
+		queue := map[string]interface{}{
+			"id":            uint(i + 1),
+			"shop_id":       shopID,
+			"customer_name": "用户" + strconv.Itoa(i+1),
+			"phone":         "1381234" + strconv.Itoa(1000+i),
+			"queue_number":  "A" + strconv.Itoa(10+i),
+			"service_id":    serviceID,
+			"service_name":  "普通海娜",
+			"status":        statusInt,
+			"created_at":    "2023-10-01 10:0" + strconv.Itoa(i) + ":00",
+			"note":          "备注" + strconv.Itoa(i+1),
+		}
+		queues = append(queues, queue)
+	}
+	
+	// 返回示例数据
+	return queues, int64(len(queues)), nil
+}
+
+// CreateQueueByAdmin 管理员创建队列
+func (s *QueueService) CreateQueueByAdmin(shopID uint, customerName, phone string, serviceID uint, note string, status int8) (map[string]interface{}, error) {
+	// 这里应该有真实的数据库写入逻辑
+	// 以下是示例实现
+	
+	// 生成队列号码
+	queueNumber := "A" + strconv.Itoa(rand.Intn(90)+10)
+	
+	// 构造返回数据
+	queue := map[string]interface{}{
+		"id":            uint(rand.Intn(1000) + 1),
+		"shop_id":       shopID,
+		"customer_name": customerName,
+		"phone":         phone,
+		"queue_number":  queueNumber,
+		"service_id":    serviceID,
+		"service_name":  "普通海娜", // 应该是从数据库获取服务名称
+		"status":        status,
+		"created_at":    time.Now().Format("2006-01-02 15:04:05"),
+		"note":          note,
+	}
+	
+	return queue, nil
 }

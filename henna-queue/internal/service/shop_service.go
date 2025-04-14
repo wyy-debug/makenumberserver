@@ -205,3 +205,106 @@ func (s *ShopService) DeleteService(serviceID, shopID uint) error {
 
 	return s.serviceRepo.Delete(serviceID)
 }
+
+// GetShopStats 获取店铺统计数据
+func (s *ShopService) GetShopStats(shopID uint, startDate, endDate string) (map[string]interface{}, error) {
+	// 验证店铺ID
+	if _, err := s.GetShop(shopID); err != nil {
+		return nil, err
+	}
+
+	// 这里应该从数据库获取真实的统计数据
+	// 这是一个示例实现
+	return map[string]interface{}{
+		"total_customers": 120,
+		"average_wait_time": 25, // 分钟
+		"peak_hours": []string{"14:00", "16:00"},
+		"services_breakdown": []map[string]interface{}{
+			{
+				"name": "普通海娜",
+				"count": 45,
+				"percentage": 37.5,
+			},
+			{
+				"name": "定制海娜",
+				"count": 35,
+				"percentage": 29.2,
+			},
+			{
+				"name": "手臂海娜",
+				"count": 25,
+				"percentage": 20.8,
+			},
+			{
+				"name": "脚部海娜",
+				"count": 15,
+				"percentage": 12.5,
+			},
+		},
+		"daily_customers": []map[string]interface{}{
+			{"date": "2023-09-25", "count": 18},
+			{"date": "2023-09-26", "count": 22},
+			{"date": "2023-09-27", "count": 15},
+			{"date": "2023-09-28", "count": 20},
+			{"date": "2023-09-29", "count": 25},
+			{"date": "2023-09-30", "count": 12},
+			{"date": "2023-10-01", "count": 8},
+		},
+	}, nil
+}
+
+// GetPublicServices 获取公开的服务列表
+func (s *ShopService) GetPublicServices(shopID uint) ([]map[string]interface{}, error) {
+	// 如果提供了店铺ID，则获取特定店铺的服务
+	if shopID > 0 {
+		// 验证店铺ID
+		if _, err := s.GetShop(shopID); err != nil {
+			return nil, err
+		}
+
+		// 从数据库获取该店铺下状态为启用的服务
+		// 这里应该有真实的数据库查询
+		// 这是一个示例实现
+		return []map[string]interface{}{
+			{
+				"id": 1,
+				"name": "普通海娜",
+				"duration": 30,
+				"description": "简单的手部海娜纹身",
+				"shop_id": shopID,
+			},
+			{
+				"id": 2,
+				"name": "定制海娜",
+				"duration": 60,
+				"description": "根据客户需求定制的海娜设计",
+				"shop_id": shopID,
+			},
+		}, nil
+	}
+
+	// 否则返回所有公开的服务
+	return []map[string]interface{}{
+		{
+			"id": 1,
+			"name": "普通海娜",
+			"duration": 30,
+			"description": "简单的手部海娜纹身",
+			"shop_id": 1,
+		},
+		{
+			"id": 2,
+			"name": "定制海娜",
+			"duration": 60,
+			"description": "根据客户需求定制的海娜设计",
+			"shop_id": 1,
+		},
+		{
+			"id": 3,
+			"name": "脚部海娜",
+			"duration": 45,
+			"description": "适用于脚部的海娜设计",
+			"shop_id": 2,
+		},
+	}, nil
+}

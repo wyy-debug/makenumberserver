@@ -172,6 +172,14 @@ func setupRoutes(r *gin.Engine) {
 			designs.GET("", api.GetDesigns)
 			designs.GET("/:id", api.GetDesign)
 		}
+
+		// 添加缺失的公共API路由
+		public.GET("/services", api.GetPublicServices)
+		public.GET("/settings", api.GetPublicSettings)
+		
+		// 公共队列查询API
+		public.GET("/queues", api.GetQueues)
+		public.POST("/queues", api.CreateQueue)
 	}
 
 	// 需要用户认证的API
@@ -195,16 +203,30 @@ func setupRoutes(r *gin.Engine) {
 		// 图案收藏
 		user.POST("/designs/:id/like", api.ToggleFavorite)
 		user.GET("/users/favorites", api.GetUserFavorites)
+
+		// 添加用户设置相关API
+		settings := user.Group("/settings")
+		{
+			settings.GET("/backups", api.GetUserBackups)
+		}
 	}
 
 	// 管理员API
 	admin := r.Group("/api/v1/admin")
 	admin.Use(middleware.AdminRequired())
 	{
+		// 管理员个人资料
+		admin.GET("/profile", api.GetAdminProfile)
+		admin.PUT("/profile", api.UpdateAdminProfile)
+
 		admin.GET("/queue", api.GetAdminQueue)
 		admin.PUT("/queue/:id", api.UpdateQueueStatus)
 		admin.POST("/queue/next", api.CallNextNumber)
 		admin.POST("/queue/pause", api.ToggleQueuePause)
+		
+		// 添加管理员队列管理API
+		admin.GET("/queues", api.GetQueues)
+		admin.POST("/queues", api.CreateQueue)
 
 		admin.GET("/statistics", api.GetStatistics)
 
@@ -215,6 +237,9 @@ func setupRoutes(r *gin.Engine) {
 
 		admin.GET("/shop", api.GetAdminShop)
 		admin.PUT("/shop", api.UpdateShop)
+		// 添加店铺统计API
+		admin.GET("/shop/stats", api.GetShopStats)
+		
 		admin.GET("/services", api.GetAdminServices)
 		admin.POST("/services", api.CreateService)
 		admin.PUT("/services/:id", api.UpdateService)

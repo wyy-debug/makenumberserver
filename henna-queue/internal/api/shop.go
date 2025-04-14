@@ -190,3 +190,45 @@ func DeleteService(c *gin.Context) {
 
 	response.Success(c, nil)
 }
+
+// GetShopStats 获取店铺统计数据
+func GetShopStats(c *gin.Context) {
+	// 从上下文获取店铺ID
+	shopID := c.GetUint(middleware.ContextShopID)
+
+	// 获取日期范围参数
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+	
+	stats, err := shopService.GetShopStats(shopID, startDate, endDate)
+	if err != nil {
+		response.ServerError(c, err.Error())
+		return
+	}
+
+	response.Success(c, stats)
+}
+
+// GetPublicServices 获取所有公开的服务列表
+func GetPublicServices(c *gin.Context) {
+	// 可选参数：店铺ID
+	shopIDStr := c.Query("shop_id")
+	
+	var shopID uint
+	if shopIDStr != "" {
+		id, err := strconv.ParseUint(shopIDStr, 10, 32)
+		if err != nil {
+			response.BadRequest(c, "无效的店铺ID")
+			return
+		}
+		shopID = uint(id)
+	}
+
+	services, err := shopService.GetPublicServices(shopID)
+	if err != nil {
+		response.ServerError(c, err.Error())
+		return
+	}
+
+	response.Success(c, services)
+}

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -16,13 +17,31 @@ var designService = service.NewDesignService()
 func GetDesigns(c *gin.Context) {
 	// 获取查询参数
 	shopIDStr := c.Query("shop_id")
-	shopID, err := strconv.ParseUint(shopIDStr, 10, 32)
-	if err != nil {
-		response.BadRequest(c, "无效的店铺ID")
-		return
+	var shopID uint
+	
+	// 如果提供了shop_id，则验证其有效性
+	if shopIDStr != "" {
+		id, err := strconv.ParseUint(shopIDStr, 10, 32)
+		if err != nil {
+			response.BadRequest(c, "无效的店铺ID")
+			return
+		}
+		shopID = uint(id)
+	} else {
+		// 如果没有提供shop_id，设置一个默认值或错误处理
+		// 这里我们用默认值1
+		shopID = 1
 	}
 
+	// 处理其他查询参数
 	category := c.Query("category")
+	search := c.Query("search")
+	priceRange := c.Query("price_range")
+	
+	// 添加日志以便调试
+	log.Printf("GetDesigns 参数: shop_id=%d, category=%s, search=%s, price_range=%s", 
+		shopID, category, search, priceRange)
+	
 	pageStr := c.DefaultQuery("page", "1")
 	pageSizeStr := c.DefaultQuery("page_size", "10")
 
@@ -35,7 +54,7 @@ func GetDesigns(c *gin.Context) {
 		userID = c.GetString(middleware.ContextUserID)
 	}
 
-	designs, total, err := designService.GetDesigns(uint(shopID), category, userID, page, pageSize)
+	designs, total, err := designService.GetDesigns(shopID, category, userID, page, pageSize)
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return

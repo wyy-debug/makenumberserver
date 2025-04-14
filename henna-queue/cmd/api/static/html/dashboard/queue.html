@@ -96,6 +96,20 @@
                     </div>
                 </div>
 
+                <!-- 加载指示器 -->
+                <div id="loadingIndicator" class="text-center py-5 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2">正在加载数据，请稍候...</p>
+                </div>
+
+                <!-- 错误提示 -->
+                <div id="errorAlert" class="alert alert-danger d-none" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span id="errorMessage">加载数据时出错</span>
+                </div>
+
                 <!-- 筛选器 -->
                 <div class="card mb-4">
                     <div class="card-body">
@@ -148,9 +162,14 @@
                 </div>
                 <div class="modal-body">
                     <form id="addQueueForm">
+                        <input type="hidden" name="shop_id" id="shop_id_input">
                         <div class="mb-3">
                             <label class="form-label">客户姓名</label>
                             <input type="text" class="form-control" name="customer_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">手机号码</label>
+                            <input type="text" class="form-control" name="phone">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">服务项目</label>
@@ -160,7 +179,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">备注</label>
-                            <textarea class="form-control" name="notes" rows="3"></textarea>
+                            <textarea class="form-control" name="note" rows="3"></textarea>
                         </div>
                     </form>
                 </div>
@@ -176,6 +195,16 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../../assets/js/common.js"></script>
     <script>
+        // 调试工具
+        const debug = {
+            log: function(label, data) {
+                console.log(`[DEBUG:${label}]`, data);
+            },
+            error: function(label, error) {
+                console.error(`[ERROR:${label}]`, error);
+            }
+        };
+        
         // 检查登录状态
         function checkAuth() {
             const token = localStorage.getItem('token');
@@ -183,12 +212,97 @@
                 window.location.href = '../login.html';
             }
         }
+        
+        // 加载用户信息
+        function loadUserInfo() {
+            // 检查是否已有用户信息
+            const userInfo = localStorage.getItem('userInfo');
+            if (userInfo) {
+                return Promise.resolve(JSON.parse(userInfo));
+            }
+            
+            // 发起请求获取用户信息
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    url: API_BASE_URL + '/api/v1/admin/profile',
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    },
+                    success: function(res) {
+                        if (res.code === 200) {
+                            localStorage.setItem('userInfo', JSON.stringify(res.data));
+                            resolve(res.data);
+                        } else {
+                            // 如果获取失败，使用默认值
+                            const defaultUserInfo = { shop_id: 1 };
+                            localStorage.setItem('userInfo', JSON.stringify(defaultUserInfo));
+                            resolve(defaultUserInfo);
+                        }
+                    },
+                    error: function() {
+                        // 如果获取失败，使用默认值
+                        const defaultUserInfo = { shop_id: 1 };
+                        localStorage.setItem('userInfo', JSON.stringify(defaultUserInfo));
+                        resolve(defaultUserInfo);
+                    }
+                });
+            });
+        }
 
         // 加载排队列表
         function loadQueueList() {
             const status = $('#statusFilter').val();
             const serviceId = $('#serviceFilter').val();
             const date = $('#dateFilter').val();
+            
+            // 获取存储的shopID
+            let shopID = 1; // 默认值
+            try {
+                const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                if (userInfo.shop_id) {
+                    shopID = userInfo.shop_id;
+                }
+            } catch (e) {
+                debug.error('获取商店ID失败', e);
+            }
+
+            // 显示加载指示器
+            $('#queueList').empty();
+            $('#loadingIndicator').removeClass('d-none');
+            $('#errorAlert').addClass('d-none');
+            
+            // 添加随机参数防止缓存
+            const timestamp = new Date().getTime();
+            
+            const queryParams = {
+                shop_id: shopID,
+                _t: timestamp // 防止缓存
+            };
+            
+            // 仅在有值时添加筛选参数
+            if (status) queryParams.status = status;
+            if (serviceId) queryParams.service_id = serviceId;
+            
+            // 日期格式处理
+            if (date) {
+                // 格式化日期为 YYYY-MM-DD
+                try {
+                    const dateObj = new Date(date);
+                    if (!isNaN(dateObj.getTime())) {
+                        const formattedDate = dateObj.toISOString().split('T')[0];
+                        queryParams.date = formattedDate;
+                        debug.log('格式化日期', {原始日期: date, 格式化后: formattedDate});
+                    } else {
+                        debug.error('无效日期格式', date);
+                    }
+                } catch (e) {
+                    debug.error('日期格式化错误', e);
+                    queryParams.date = date; // 使用原始值
+                }
+            }
+            
+            debug.log('查询参数', queryParams);
 
             $.ajax({
                 url: API_BASE_URL + '/api/v1/queues',
@@ -196,68 +310,132 @@
                 headers: {
                     'Authorization': 'Bearer ' + localStorage.getItem('token')
                 },
-                data: {
-                    status: status,
-                    service_id: serviceId,
-                    date: date
-                },
+                data: queryParams,
+                cache: false, // 禁用Ajax缓存
                 success: function(res) {
+                    // 隐藏加载指示器
+                    $('#loadingIndicator').addClass('d-none');
+                    
+                    debug.log('排队数据响应', res);
+                    
                     if (res.code === 200) {
                         const queueList = $('#queueList');
                         queueList.empty();
 
-                        res.data.forEach(queue => {
-                            const card = createQueueCard(queue);
-                            queueList.append(card);
-                        });
+                        // 正确处理队列数据
+                        let queues = [];
+                        let total = 0;
+                        
+                        // 处理不同的响应格式
+                        if (res.data) {
+                            debug.log('响应数据类型', {
+                                isArray: Array.isArray(res.data),
+                                hasQueues: res.data.queues ? true : false,
+                                dataType: typeof res.data,
+                                emptyObject: JSON.stringify(res.data) === '{}'
+                            });
+                            
+                            if (res.data.queues) {
+                                // 结构化格式: { queues: [...], total: 10 }
+                                queues = res.data.queues;
+                                total = res.data.total || queues.length;
+                            } else if (Array.isArray(res.data)) {
+                                // 数组格式: [...]
+                                queues = res.data;
+                                total = queues.length;
+                            }
+                        }
+                        
+                        debug.log('解析后的队列数据', { queues, total });
+                        
+                        if (Array.isArray(queues) && queues.length > 0) {
+                            queues.forEach(queue => {
+                                const card = createQueueCard(queue);
+                                queueList.append(card);
+                            });
+                            
+                            // 添加统计信息
+                            queueList.prepend(`<div class="col-12 mb-3">
+                                <div class="alert alert-info">
+                                    共找到 ${total} 条排队记录，当前显示 ${queues.length} 条
+                                </div>
+                            </div>`);
+                        } else {
+                            queueList.append('<div class="col-12 text-center py-5"><p>暂无排队数据</p></div>');
+                        }
                     } else {
+                        debug.error('加载排队列表失败', res.message);
                         showError(res.message || '加载排队列表失败');
                     }
                 },
-                error: function() {
-                    showError('加载排队列表失败');
+                error: function(xhr, status, error) {
+                    // 隐藏加载指示器
+                    $('#loadingIndicator').addClass('d-none');
+                    
+                    debug.error('排队列表请求失败', {
+                        status, 
+                        error, 
+                        response: xhr.responseText
+                    });
+                    
+                    showError('加载排队列表失败: ' + error);
                 }
             });
         }
 
         // 创建排队卡片
         function createQueueCard(queue) {
+            // 添加调试输出
+            debug.log('创建卡片的队列数据', queue);
+            
+            // 确保所有必需字段都存在
+            const queueData = {
+                id: queue.id || 0,
+                queue_number: queue.queue_number || '无号码',
+                customer_name: queue.customer_name || '未知客户',
+                service_name: queue.service_name || '未知服务',
+                wait_time: queue.wait_time || 0,
+                created_at: queue.created_at || new Date().toISOString(),
+                status: parseInt(queue.status) || 0
+            };
+            
             const statusMap = {
                 1: { text: '等待中', class: 'warning' },
                 2: { text: '服务中', class: 'primary' },
                 3: { text: '已完成', class: 'success' },
-                4: { text: '已取消', class: 'danger' }
+                4: { text: '已取消', class: 'danger' },
+                0: { text: '未知', class: 'secondary' }
             };
 
-            const status = statusMap[queue.status] || { text: '未知', class: 'secondary' };
+            const status = statusMap[queueData.status] || statusMap[0];
 
             return `
                 <div class="col-md-6 col-lg-4">
                     <div class="card queue-card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-3">
-                                <h5 class="card-title">排队号: ${queue.queue_number}</h5>
+                                <h5 class="card-title">排队号: ${queueData.queue_number}</h5>
                                 <span class="badge bg-${status.class} status-badge">${status.text}</span>
                             </div>
                             <p class="card-text">
-                                <strong>客户：</strong>${queue.customer_name}<br>
-                                <strong>服务：</strong>${queue.service_name}<br>
-                                <strong>等待时间：</strong>${queue.wait_time}分钟<br>
-                                <strong>创建时间：</strong>${new Date(queue.created_at).toLocaleString()}
+                                <strong>客户：</strong>${queueData.customer_name}<br>
+                                <strong>服务：</strong>${queueData.service_name}<br>
+                                <strong>等待时间：</strong>${queueData.wait_time}分钟<br>
+                                <strong>创建时间：</strong>${new Date(queueData.created_at).toLocaleString()}
                             </p>
                             <div class="action-buttons">
-                                ${queue.status === 1 ? `
-                                    <button class="btn btn-sm btn-primary" onclick="startService(${queue.id})">
+                                ${queueData.status === 1 ? `
+                                    <button class="btn btn-sm btn-primary" onclick="startService(${queueData.id})">
                                         <i class="bi bi-play-fill"></i> 开始服务
                                     </button>
                                 ` : ''}
-                                ${queue.status === 2 ? `
-                                    <button class="btn btn-sm btn-success" onclick="completeService(${queue.id})">
+                                ${queueData.status === 2 ? `
+                                    <button class="btn btn-sm btn-success" onclick="completeService(${queueData.id})">
                                         <i class="bi bi-check-lg"></i> 完成服务
                                     </button>
                                 ` : ''}
-                                ${queue.status === 1 ? `
-                                    <button class="btn btn-sm btn-danger" onclick="cancelQueue(${queue.id})">
+                                ${queueData.status === 1 ? `
+                                    <button class="btn btn-sm btn-danger" onclick="cancelQueue(${queueData.id})">
                                         <i class="bi bi-x-lg"></i> 取消
                                     </button>
                                 ` : ''}
@@ -270,22 +448,67 @@
 
         // 加载服务列表
         function loadServices() {
+            // 获取店铺ID
+            let shopID = 1; // 默认值
+            try {
+                const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                if (userInfo.shop_id) {
+                    shopID = userInfo.shop_id;
+                }
+            } catch (e) {
+                console.error('获取商店ID失败', e);
+            }
+            
+            const timestamp = new Date().getTime();
+            
             $.ajax({
                 url: API_BASE_URL + '/api/v1/services',
                 method: 'GET',
                 headers: {
                     'Authorization': 'Bearer ' + localStorage.getItem('token')
                 },
+                data: {
+                    shop_id: shopID,
+                    _t: timestamp
+                },
+                cache: false,
                 success: function(res) {
                     if (res.code === 200) {
+                        debug.log('服务数据', res.data);
+                        
                         const serviceSelect = $('select[name="service_id"]');
                         serviceSelect.empty();
                         serviceSelect.append('<option value="">请选择服务项目</option>');
                         
-                        res.data.forEach(service => {
-                            serviceSelect.append(`<option value="${service.id}">${service.name}</option>`);
-                        });
+                        // 确保res.data是数组
+                        const services = Array.isArray(res.data) ? res.data : 
+                                        (res.data && Array.isArray(res.data.services) ? res.data.services : []);
+                        
+                        if (services.length > 0) {
+                            services.forEach(service => {
+                                serviceSelect.append(`<option value="${service.id}">${service.name}</option>`);
+                            });
+                            
+                            // 为筛选器加载服务选项
+                            const serviceFilter = $('#serviceFilter');
+                            serviceFilter.empty();
+                            serviceFilter.append('<option value="">全部</option>');
+                            
+                            services.forEach(service => {
+                                serviceFilter.append(`<option value="${service.id}">${service.name}</option>`);
+                            });
+                            
+                            debug.log('服务选项已加载', services.length);
+                        } else {
+                            debug.error('服务数据为空', services);
+                            serviceSelect.append('<option value="" disabled>无可用服务项目</option>');
+                        }
+                    } else {
+                        debug.error('加载服务列表失败', res.message);
                     }
+                },
+                error: function(xhr, status, error) {
+                    debug.error('服务列表请求失败', {status, error, response: xhr.responseText});
                 }
             });
         }
@@ -293,11 +516,13 @@
         // 开始服务
         function startService(queueId) {
             $.ajax({
-                url: API_BASE_URL + `/api/v1/queues/${queueId}/start`,
-                method: 'POST',
+                url: API_BASE_URL + `/api/v1/admin/queue/${queueId}`,
+                method: 'PUT',
                 headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                    'Content-Type': 'application/json'
                 },
+                data: JSON.stringify({ status: 2 }),
                 success: function(res) {
                     if (res.code === 200) {
                         loadQueueList();
@@ -315,11 +540,13 @@
         // 完成服务
         function completeService(queueId) {
             $.ajax({
-                url: API_BASE_URL + `/api/v1/queues/${queueId}/complete`,
-                method: 'POST',
+                url: API_BASE_URL + `/api/v1/admin/queue/${queueId}`,
+                method: 'PUT',
                 headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                    'Content-Type': 'application/json'
                 },
+                data: JSON.stringify({ status: 3 }),
                 success: function(res) {
                     if (res.code === 200) {
                         loadQueueList();
@@ -338,11 +565,13 @@
         function cancelQueue(queueId) {
             if (confirm('确定要取消这个排队吗？')) {
                 $.ajax({
-                    url: API_BASE_URL + `/api/v1/queues/${queueId}/cancel`,
-                    method: 'POST',
+                    url: API_BASE_URL + `/api/v1/admin/queue/${queueId}`,
+                    method: 'PUT',
                     headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                        'Content-Type': 'application/json'
                     },
+                    data: JSON.stringify({ status: 4 }),
                     success: function(res) {
                         if (res.code === 200) {
                             loadQueueList();
@@ -360,19 +589,56 @@
 
         // 显示成功消息
         function showSuccess(message) {
-            alert(message);
+            // 创建一个成功提示框
+            const successAlert = $(`
+                <div class="alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3" style="z-index: 1050;" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="关闭"></button>
+                </div>
+            `);
+            
+            // 添加到页面
+            $('body').append(successAlert);
+            
+            // 3秒后自动关闭
+            setTimeout(function() {
+                successAlert.alert('close');
+            }, 3000);
         }
 
         // 显示错误消息
         function showError(message) {
-            alert(message);
+            $('#errorAlert').removeClass('d-none');
+            $('#errorMessage').text(message);
+            setTimeout(() => {
+                $('#errorAlert').addClass('d-none');
+            }, 5000);
         }
 
         // 页面加载完成后执行
         $(document).ready(function() {
             checkAuth();
-            loadQueueList();
-            loadServices();
+            
+            // 先获取用户信息，然后再加载其他数据
+            loadUserInfo()
+                .then(userInfo => {
+                    // 获取商店ID
+                    const shopID = userInfo.shop_id || 1;
+                    $("#shop_id_input").val(shopID);
+                    
+                    // 加载数据
+                    loadQueueList();
+                    loadServices();
+                })
+                .catch(error => {
+                    console.error('加载用户信息失败:', error);
+                    $("#shop_id_input").val(1);  // 设置默认值
+                    
+                    // 仍然尝试加载数据
+                    loadQueueList();
+                    loadServices();
+                });
 
             // 绑定事件
             $('#refreshBtn').click(loadQueueList);
@@ -381,27 +647,134 @@
                 $('#addQueueModal').modal('show');
             });
             $('#submitQueueBtn').click(function() {
-                const formData = new FormData($('#addQueueForm')[0]);
+                // 验证表单
+                const customerName = $('input[name="customer_name"]').val();
+                if (!customerName) {
+                    showError('请输入客户姓名');
+                    return;
+                }
+                
+                const serviceId = $('select[name="service_id"]').val();
+                if (!serviceId) {
+                    showError('请选择服务项目');
+                    return;
+                }
+                
+                // 准备排队数据
+                const formData = {
+                    shop_id: parseInt($("#shop_id_input").val()),
+                    customer_name: customerName,
+                    phone: $('input[name="phone"]').val(),
+                    service_id: parseInt(serviceId),
+                    note: $('textarea[name="note"]').val(),
+                    status: 1  // 默认状态为等待中
+                };
+                
+                debug.log('提交排队数据', formData);
+                
+                // 显示加载状态
+                $('#submitQueueBtn').prop('disabled', true).text('提交中...');
+                
                 $.ajax({
                     url: API_BASE_URL + '/api/v1/queues',
                     method: 'POST',
                     headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                        'Content-Type': 'application/json'
                     },
-                    data: formData,
-                    processData: false,
-                    contentType: false,
+                    data: JSON.stringify(formData),
                     success: function(res) {
+                        // 恢复按钮状态
+                        $('#submitQueueBtn').prop('disabled', false).text('提交');
+                        
+                        debug.log('创建排队响应', res);
+                        
                         if (res.code === 200) {
+                            // 记录创建的数据，以便检查字段
+                            debug.log('创建的队列详情', {
+                                id: res.data.id,
+                                shop_id: res.data.shop_id,
+                                customer_name: res.data.customer_name,
+                                service_id: res.data.service_id,
+                                status: res.data.status,
+                                created_at: res.data.created_at
+                            });
+                            
                             $('#addQueueModal').modal('hide');
-                            loadQueueList();
+                            // 重置表单
+                            $('#addQueueForm')[0].reset();
+                            
+                            // 清空筛选条件
+                            $('#statusFilter').val('');
+                            $('#serviceFilter').val('');
+                            $('#dateFilter').val('');
+                            
+                            // 显示成功消息
                             showSuccess('排队创建成功');
+                            
+                            // 延迟刷新队列列表
+                            setTimeout(function() {
+                                // 不使用loadQueueList函数，而是直接进行查询
+                                $.ajax({
+                                    url: API_BASE_URL + '/api/v1/queues',
+                                    method: 'GET',
+                                    headers: {
+                                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                                    },
+                                    data: {
+                                        shop_id: parseInt($("#shop_id_input").val()),
+                                        _t: new Date().getTime() // 防止缓存
+                                    },
+                                    success: function(res) {
+                                        debug.log('创建后查询结果', res);
+                                        
+                                        if (res.code === 200 && res.data) {
+                                            // 手动更新UI
+                                            const queueList = $('#queueList');
+                                            queueList.empty();
+                                            
+                                            const queues = res.data.queues || [];
+                                            const total = res.data.total || 0;
+                                            
+                                            if (queues.length > 0) {
+                                                queues.forEach(queue => {
+                                                    const card = createQueueCard(queue);
+                                                    queueList.append(card);
+                                                });
+                                                
+                                                queueList.prepend(`<div class="col-12 mb-3">
+                                                    <div class="alert alert-info">
+                                                        共找到 ${total} 条排队记录，当前显示 ${queues.length} 条
+                                                    </div>
+                                                </div>`);
+                                            } else {
+                                                queueList.append('<div class="col-12 text-center py-5"><p>暂无排队数据</p></div>');
+                                            }
+                                        } else {
+                                            // 如果直接请求失败，回退到标准加载
+                                            loadQueueList();
+                                        }
+                                    },
+                                    error: function() {
+                                        // 请求出错，回退到标准加载
+                                        loadQueueList();
+                                    }
+                                });
+                            }, 1000);
                         } else {
                             showError(res.message || '创建失败');
                         }
                     },
-                    error: function() {
-                        showError('创建失败');
+                    error: function(xhr, status, error) {
+                        // 恢复按钮状态
+                        $('#submitQueueBtn').prop('disabled', false).text('提交');
+                        debug.error('创建排队记录失败', {
+                            status, 
+                            error, 
+                            response: xhr.responseText,
+                            data: formData
+                        });
+                        showError('创建失败: ' + (xhr.responseJSON?.message || error));
                     }
                 });
             });
