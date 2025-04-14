@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math/rand"
 	"strconv"
 	"time"
 
@@ -346,59 +345,187 @@ func (s *QueueService) GetAdminQueue(shopID uint) ([]*model.Queue, error) {
 
 // GetQueues 获取队列列表
 func (s *QueueService) GetQueues(shopID uint, status string, serviceID uint, date string, page, pageSize int) ([]map[string]interface{}, int64, error) {
-	// 这里应该有真实的数据库查询
-	// 以下是示例数据
-	var statusInt int8
-	if status != "" {
-		statusVal, err := strconv.ParseInt(status, 10, 8)
-		if err == nil {
-			statusInt = int8(statusVal)
-		}
+	// 添加日志以便于调试
+	log.Printf("获取队列列表，店铺ID: %d, 状态: %s, 服务ID: %d, 日期: %s, 页码: %d, 每页数量: %d", 
+		shopID, status, serviceID, date, page, pageSize)
+	
+	if s.queueRepo == nil {
+		return nil, 0, errors.New("队列仓库未初始化")
 	}
 	
-	// 构造示例数据
-	queues := []map[string]interface{}{}
-	for i := 0; i < 5; i++ {
-		queue := map[string]interface{}{
-			"id":            uint(i + 1),
-			"shop_id":       shopID,
-			"customer_name": "用户" + strconv.Itoa(i+1),
-			"phone":         "1381234" + strconv.Itoa(1000+i),
-			"queue_number":  "A" + strconv.Itoa(10+i),
-			"service_id":    serviceID,
-			"service_name":  "普通海娜",
-			"status":        statusInt,
-			"created_at":    "2023-10-01 10:0" + strconv.Itoa(i) + ":00",
-			"note":          "备注" + strconv.Itoa(i+1),
-		}
-		queues = append(queues, queue)
+	// 尝试获取活跃队列
+	queues, err := s.queueRepo.GetActiveQueues(shopID)
+	if err != nil {
+		log.Printf("获取活跃队列错误: %v", err)
+		return nil, 0, err
 	}
 	
-	// 返回示例数据
-	return queues, int64(len(queues)), nil
+	if queues == nil {
+		// 如果返回 nil 且没有错误，返回空结果
+		return []map[string]interface{}{}, 0, nil
+	}
+
+	// 过滤队列
+	var filteredQueues []*model.Queue
+	for _, queue := range queues {
+		// 跳过无效的队列记录
+		if queue == nil {
+			continue
+		}
+		
+		// 状态过滤
+		if status != "" {
+			statusInt, err := strconv.ParseInt(status, 10, 8)
+			if err == nil && queue.Status != int8(statusInt) {
+				continue
+			}
+		}
+
+		// 服务ID过滤
+		if serviceID > 0 && queue.ServiceID != serviceID {
+			continue
+		}
+
+		// 日期过滤
+		if date != "" {
+			startTime, err := time.Parse("20060102", date)
+			if err == nil {
+				endTime := startTime.AddDate(0, 0, 1)
+				if queue.CreatedAt.Before(startTime) || queue.CreatedAt.After(endTime) {
+					continue
+				}
+			}
+		}
+
+		filteredQueues = append(filteredQueues, queue)
+	}
+
+	// 计算总数
+	total := int64(len(filteredQueues))
+
+	// 分页处理
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if start >= len(filteredQueues) {
+		return []map[string]interface{}{}, total, nil
+	}
+	if end > len(filteredQueues) {
+		end = len(filteredQueues)
+	}
+	pagedQueues := filteredQueues[start:end]
+
+	// 构造返回数据
+	result := make([]map[string]interface{}, 0, len(pagedQueues))
+	for _, queue := range pagedQueues {
+		// 确保关联数据存在
+		customerName := ""
+		phone := ""
+		serviceName := ""
+		
+		// User 是值类型，不能直接和 nil 比较
+		// 使用 UserID 字段判断是否有关联数据
+		if queue.UserID != "" {
+			customerName = queue.User.Nickname
+			phone = queue.User.Phone
+		}
+		
+		// Service 是值类型，不能直接和 nil 比较
+		// 使用 ServiceID 字段判断是否有关联数据
+		if queue.ServiceID > 0 {
+			serviceName = queue.Service.Name
+		}
+		
+		queueData := map[string]interface{}{
+			"id":            queue.ID,
+			"shop_id":       queue.ShopID,
+			"customer_name": customerName,
+			"phone":         phone,
+			"queue_number":  queue.QueueNumber,
+			"service_id":    queue.ServiceID,
+			"service_name":  serviceName,
+			"status":        queue.Status,
+			"created_at":    queue.CreatedAt.Format("2006-01-02 15:04:05"),
+			"note":          "", // 如果需要备注字段，可以在Queue模型中添加
+		}
+		
+		result = append(result, queueData)
+	}
+
+	return result, total, nil
 }
 
 // CreateQueueByAdmin 管理员创建队列
 func (s *QueueService) CreateQueueByAdmin(shopID uint, customerName, phone string, serviceID uint, note string, status int8) (map[string]interface{}, error) {
-	// 这里应该有真实的数据库写入逻辑
-	// 以下是示例实现
+	log.Printf("管理员创建队列，店铺ID: %d, 客户名: %s, 电话: %s, 服务ID: %d, 状态: %d", 
+		shopID, customerName, phone, serviceID, status)
+
+	// 移除服务检查
+	// 获取服务名称，如果无法获取，使用默认值
+	serviceName := "未知服务"
+	service, err := s.serviceRepo.GetByID(serviceID)
+	log.Printf("服务: %v", service)
+	if err == nil && service != nil {
+		serviceName = service.Name
+	}
 	
-	// 生成队列号码
-	queueNumber := "A" + strconv.Itoa(rand.Intn(90)+10)
+	// 检查是否已有相同电话的客户
+	var userID string
+	user, err := s.userRepo.GetByPhone(phone)
+	if err != nil || user == nil {
+		// 如果用户不存在，创建一个临时用户
+		tempUser := &model.User{
+			ID:        fmt.Sprintf("temp_%d", time.Now().UnixNano()),
+			Nickname:  customerName,
+			Phone:     phone,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+		err = s.userRepo.Create(tempUser)
+		if err != nil {
+			return nil, errors.New("创建临时用户失败: " + err.Error())
+		}
+		userID = tempUser.ID
+	} else {
+		userID = user.ID
+	}
 	
-	// 构造返回数据
-	queue := map[string]interface{}{
-		"id":            uint(rand.Intn(1000) + 1),
-		"shop_id":       shopID,
+	// 生成排队号码
+	now := time.Now()
+	datePrefix := now.Format("0102") // 月日
+
+	// 获取今日队列数量
+	count, _ := s.queueRepo.GetDailyCount(shopID, now.Format("20060102"))
+	queueNumber := fmt.Sprintf("%s%03d", datePrefix, count+1)
+	
+	// 创建排队记录
+	queue := &model.Queue{
+		ShopID:      shopID,
+		QueueNumber: queueNumber,
+		UserID:      userID,
+		ServiceID:   serviceID,
+		Status:      status,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+	
+	err = s.queueRepo.Create(queue)
+	if err != nil {
+		return nil, errors.New("创建队列失败: " + err.Error())
+	}
+	
+	// 构造返回数据，不再尝试重新加载队列
+	result := map[string]interface{}{
+		"id":            queue.ID,
+		"shop_id":       queue.ShopID,
 		"customer_name": customerName,
 		"phone":         phone,
-		"queue_number":  queueNumber,
-		"service_id":    serviceID,
-		"service_name":  "普通海娜", // 应该是从数据库获取服务名称
-		"status":        status,
-		"created_at":    time.Now().Format("2006-01-02 15:04:05"),
+		"queue_number":  queue.QueueNumber,
+		"service_id":    queue.ServiceID,
+		"service_name":  serviceName,
+		"status":        queue.Status,
+		"created_at":    queue.CreatedAt.Format("2006-01-02 15:04:05"),
 		"note":          note,
 	}
 	
-	return queue, nil
+	return result, nil
 }

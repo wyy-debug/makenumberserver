@@ -18,6 +18,7 @@ type AdminRepository interface {
 // UserRepository 用户仓库接口
 type UserRepository interface {
 	GetByID(id string) (*model.User, error)
+	GetByPhone(phone string) (*model.User, error)
 	Create(user *model.User) error
 	Update(user *model.User) error
 }
@@ -34,6 +35,7 @@ type ShopRepository interface {
 type ServiceRepository interface {
 	GetByID(id uint) (*model.Service, error)
 	GetByShopID(shopID uint) ([]*model.Service, error)
+	GetAll() ([]*model.Service, error)
 	Create(service *model.Service) error
 	Update(service *model.Service) error
 	Delete(id uint) error

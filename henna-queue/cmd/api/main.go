@@ -163,7 +163,7 @@ func setupRoutes(r *gin.Engine) {
 		shops := public.Group("/shops")
 		{
 			shops.GET("/:id", api.GetShop)
-			shops.GET("/:id/services", api.GetShopServices)
+			shops.GET("/:id/services", api.GetSvcsByShopId)
 		}
 
 		// 图案相关
@@ -171,10 +171,12 @@ func setupRoutes(r *gin.Engine) {
 		{
 			designs.GET("", api.GetDesigns)
 			designs.GET("/:id", api.GetDesign)
+			designs.POST("", api.CreateDesign)
 		}
 
 		// 添加缺失的公共API路由
-		public.GET("/services", api.GetPublicServices)
+		public.GET("/services", api.GetPublicSvcs)
+		public.POST("/services", api.CreateSvc)
 		public.GET("/settings", api.GetPublicSettings)
 		
 		// 公共队列查询API
@@ -240,10 +242,10 @@ func setupRoutes(r *gin.Engine) {
 		// 添加店铺统计API
 		admin.GET("/shop/stats", api.GetShopStats)
 		
-		admin.GET("/services", api.GetAdminServices)
-		admin.POST("/services", api.CreateService)
-		admin.PUT("/services/:id", api.UpdateService)
-		admin.DELETE("/services/:id", api.DeleteService)
+		admin.GET("/services", api.GetAdminSvcs)
+		admin.POST("/services", api.CreateSvc)
+		admin.PUT("/services/:id", api.UpdateSvc)
+		admin.DELETE("/services/:id", api.DeleteSvc)
 	}
 
 	// 管理员认证
