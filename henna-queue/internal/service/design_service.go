@@ -22,7 +22,7 @@ func NewDesignService() *DesignService {
 }
 
 // GetDesigns 获取图案列表
-func (s *DesignService) GetDesigns(shopID uint, category, userID string, page, pageSize int) ([]*model.DesignResponse, int, error) {
+func (s *DesignService) GetDesigns(shopID uint, category string, page, pageSize int) ([]*model.DesignResponse, int, error) {
 	designs, total, err := s.designRepo.GetDesigns(shopID, category, page, pageSize)
 	if err != nil {
 		return nil, 0, err
@@ -32,12 +32,6 @@ func (s *DesignService) GetDesigns(shopID uint, category, userID string, page, p
 	var result []*model.DesignResponse
 	for _, design := range designs {
 		isLiked := false
-		if userID != "" {
-			// 检查是否已收藏
-			if liked, _ := s.favoriteRepo.CheckFavorite(userID, design.ID); liked {
-				isLiked = true
-			}
-		}
 
 		result = append(result, &model.DesignResponse{
 			TattooDesign: *design,

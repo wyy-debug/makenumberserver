@@ -39,40 +39,6 @@ func main() {
 	}
 	log.Printf("静态文件夹路径: %s", absStaticPath)
 
-	// 检查静态文件夹是否存在
-	if _, err := os.Stat(absStaticPath); os.IsNotExist(err) {
-		log.Printf("警告: 静态文件夹不存在，将创建它: %s", absStaticPath)
-		if err := os.MkdirAll(filepath.Join(absStaticPath, "html"), 0755); err != nil {
-			log.Fatalf("无法创建静态文件夹: %v", err)
-		}
-		// 创建一个测试HTML文件
-		testHTML := `<!DOCTYPE html>
-<html>
-<head>
-    <title>测试页面</title>
-</head>
-<body>
-    <h1>测试成功！</h1>
-    <p>静态文件服务器工作正常。</p>
-</body>
-</html>`
-		if err := os.WriteFile(filepath.Join(absStaticPath, "html", "test.html"), []byte(testHTML), 0644); err != nil {
-			log.Fatalf("无法创建测试HTML文件: %v", err)
-		}
-		log.Printf("已创建测试HTML文件: %s", filepath.Join(absStaticPath, "html", "test.html"))
-	} else {
-		log.Printf("静态文件夹存在: %s", absStaticPath)
-		// 列出html目录中的文件
-		files, err := os.ReadDir(filepath.Join(absStaticPath, "html"))
-		if err != nil {
-			log.Printf("警告: 无法读取html目录: %v", err)
-		} else {
-			log.Printf("html目录中的文件:")
-			for _, file := range files {
-				log.Printf("  - %s", file.Name())
-			}
-		}
-	}
 
 	// 计算UI文件夹的绝对路径
 	uiPath := filepath.Join(currentDir, "../../UI")
@@ -167,12 +133,12 @@ func setupRoutes(r *gin.Engine) {
 		}
 
 		// 图案相关
-		//designs := public.Group("/designs")
-		//{
-			//designs.GET("", api.GetDesigns)
+		designs := public.Group("/designs")
+		{
+			designs.GET("", api.GetDesigns)
 			//designs.GET("/:id", api.GetDesign)
-			//designs.POST("", api.CreateDesign)
-		//}
+			designs.POST("", api.CreateDesign)
+		}
 
 		// 添加缺失的公共API路由
 		public.GET("/services", api.GetPublicSvcs)
@@ -267,4 +233,17 @@ func setupRoutes(r *gin.Engine) {
 	absStaticPath, _ = filepath.Abs(absStaticPath)
 	log.Printf("配置静态文件服务: 路径=%s, URL前缀=/static", absStaticPath)
 	r.Static("/static", absStaticPath)
+	
+	// 配置上传文件目录为静态文件服务
+	uploadsPath := viper.GetString("upload.path")
+	if uploadsPath == "" {
+		uploadsPath = "./uploads"
+	}
+	absUploadsPath, _ := filepath.Abs(uploadsPath)
+	log.Printf("配置上传目录静态服务: 路径=%s, URL前缀=/uploads", absUploadsPath)
+	// 确保目录存在
+	if err := os.MkdirAll(absUploadsPath, 0755); err != nil {
+		log.Printf("警告: 创建上传目录失败: %v", err)
+	}
+	r.Static("/uploads", absUploadsPath)
 }

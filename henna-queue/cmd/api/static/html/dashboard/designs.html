@@ -270,8 +270,12 @@
                     if (res.code === 200) {
                         const designList = $('#designList');
                         designList.empty();
-
-                        res.data.forEach(design => {
+                        
+                        // 正确处理嵌套的设计数据
+                        const designs = res.data.designs || [];
+                        console.log("获取到的设计数据:", designs);
+                        
+                        designs.forEach(design => {
                             const card = createDesignCard(design);
                             designList.append(card);
                         });
@@ -293,16 +297,32 @@
                 3: '几何纹身',
                 4: '其他'
             };
+            
+            // 适配字段名差异（API返回的是title而不是name）
+            const designName = design.title || design.name || '未命名设计';
+            const designCategory = design.category || design.category_id || '未分类';
+            
+            // 处理图片URL
+            let imageUrl = design.image_url || '';
+            // 如果URL不是以http或/static开头，则添加API基础路径
+            if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('/static')) {
+                // 如果是以/uploads开头，则直接使用，否则添加API基础路径
+                if (!imageUrl.startsWith('/uploads')) {
+                    imageUrl = API_BASE_URL + imageUrl;
+                }
+            }
+            
+            console.log("设计图片URL:", imageUrl);
 
             return `
                 <div class="col-md-4 col-lg-3">
                     <div class="card design-card">
-                        <img src="${design.image_url}" class="card-img-top design-image" alt="${design.name}">
+                        <img src="${imageUrl}" class="card-img-top design-image" alt="${designName}" onerror="this.src='/static/assets/img/placeholder.png'; this.onerror='';">
                         <div class="card-body">
-                            <h5 class="card-title">${design.name}</h5>
+                            <h5 class="card-title">${designName}</h5>
                             <p class="card-text">
-                                <small class="text-muted">分类：${categoryMap[design.category_id]}</small><br>
-                                <small class="text-muted">价格：￥${design.price}</small>
+                                <small class="text-muted">分类：${categoryMap[designCategory] || designCategory}</small><br>
+                                <small class="text-muted">${design.likes !== undefined ? '点赞数：' + design.likes : ''}</small>
                             </p>
                             <div class="btn-group w-100">
                                 <button class="btn btn-outline-primary" onclick="editDesign(${design.id})">
@@ -329,12 +349,21 @@
                 success: function(res) {
                     if (res.code === 200) {
                         const design = res.data;
+                        console.log("编辑的设计数据:", design);
+                        
                         const form = $('#editDesignForm');
                         form.find('[name="id"]').val(design.id);
-                        form.find('[name="name"]').val(design.name);
-                        form.find('[name="category_id"]').val(design.category_id);
-                        form.find('[name="price"]').val(design.price);
-                        form.find('[name="description"]').val(design.description);
+                        // 适配字段名差异
+                        form.find('[name="name"]').val(design.title || design.name || '');
+                        form.find('[name="category_id"]').val(design.category || design.category_id || '');
+                        form.find('[name="description"]').val(design.description || '');
+                        
+                        // 如果有图片信息，可以显示预览
+                        if (design.image_url) {
+                            // 可以在这里添加代码显示当前图片的预览
+                            console.log("当前图片URL:", design.image_url);
+                        }
+                        
                         $('#editDesignModal').modal('show');
                     } else {
                         showError(res.message || '加载设计详情失败');
@@ -393,6 +422,31 @@
             });
             $('#submitDesignBtn').click(function() {
                 const formData = new FormData($('#addDesignForm')[0]);
+                
+                // 检查必填字段
+                if (!formData.get('name')) {
+                    showError('请输入设计名称');
+                    return;
+                }
+                if (!formData.get('category_id')) {
+                    showError('请选择分类');
+                    return;
+                }
+                if (!formData.get('image') || formData.get('image').size === 0) {
+                    showError('请选择设计图片');
+                    return;
+                }
+                
+                console.log("提交设计表单数据：", {
+                    name: formData.get('name'),
+                    category_id: formData.get('category_id'),
+                    hasImage: formData.get('image') ? true : false
+                });
+                
+                // 禁用按钮防止重复提交
+                const $btn = $(this);
+                $btn.prop('disabled', true).text('上传中...');
+                
                 $.ajax({
                     url: API_BASE_URL + '/api/v1/designs',
                     method: 'POST',
@@ -403,16 +457,20 @@
                     processData: false,
                     contentType: false,
                     success: function(res) {
+                        $btn.prop('disabled', false).text('上传');
                         if (res.code === 200) {
                             $('#addDesignModal').modal('hide');
+                            $('#addDesignForm')[0].reset();
                             loadDesignList();
                             showSuccess('设计上传成功');
                         } else {
                             showError(res.message || '上传失败');
                         }
                     },
-                    error: function() {
-                        showError('上传失败');
+                    error: function(xhr) {
+                        $btn.prop('disabled', false).text('上传');
+                        console.error("上传失败:", xhr.responseText);
+                        showError(`上传失败 (${xhr.status}): ${xhr.responseText || '服务器错误'}`);
                     }
                 });
             });
