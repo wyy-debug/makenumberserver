@@ -148,6 +148,7 @@ func setupRoutes(r *gin.Engine) {
 		// 公共队列查询API
 		public.GET("/queues", api.GetQueues)
 		public.POST("/queues", api.CreateQueue)
+		public.GET("/queue/current", api.GetCurrentQueue)
 	}
 
 	// 需要用户认证的API
@@ -165,7 +166,6 @@ func setupRoutes(r *gin.Engine) {
 			queue.GET("/status", api.GetQueueStatus)
 			queue.POST("/number", api.GetQueueNumber)
 			queue.DELETE("/number", api.CancelQueue)
-			queue.GET("/current", api.GetCurrentQueue)
 		}
 
 		// 图案收藏

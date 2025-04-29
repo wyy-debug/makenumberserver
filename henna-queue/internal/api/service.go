@@ -36,30 +36,16 @@ func GetSvcById(c *gin.Context) {
 
 // GetSvcsByShopId 获取店铺的所有服务
 func GetSvcsByShopId(c *gin.Context) {
-	// 获取店铺ID
-	var shopID uint
-	
-	// 尝试从路由中间件获取商店ID（管理员）
-	if value, exists := c.Get(middleware.ContextShopID); exists {
-		shopID = value.(uint)
-	} else {
-		// 否则尝试从查询参数获取
-		shopIDStr := c.Query("shop_id")
-		if shopIDStr != "" {
-			id, err := strconv.ParseUint(shopIDStr, 10, 32)
-			if err != nil {
-				response.BadRequest(c, "无效的店铺ID")
-				return
-			}
-			shopID = uint(id)
-		} else {
-			response.BadRequest(c, "缺少店铺ID参数")
-			return
-		}
+	// 从路径参数获取店铺ID
+	shopIDStr := c.Param("id")
+	shopID, err := strconv.ParseUint(shopIDStr, 10, 32)
+	if err != nil {
+		response.BadRequest(c, "无效的店铺ID")
+		return
 	}
 
 	// 获取服务列表
-	services, err := serviceService.GetShopServices(shopID)
+	services, err := serviceService.GetShopServices(uint(shopID))
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return
